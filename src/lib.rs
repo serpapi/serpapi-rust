@@ -5,4 +5,4 @@
 //! SerpApi.com enables to do localized search, leverage advanced search engine features and a lot more...
 //! A completed documentation is available at [SerpApi](https://serpapi.com).
 //!
-pub mod serp_api_search;
+pub mod serpapi;

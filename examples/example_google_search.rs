@@ -1,4 +1,4 @@
-use serpapi_search_rust::serp_api_search::SerpApiSearch;
+use serpapi::serpapi::SerpApiClient;
 use std::collections::HashMap;
 use std::env;
 
@@ -12,19 +12,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     println!("let's search about coffee on google");
-    let mut params = HashMap::<String, String>::new();
-    params.insert("q".to_string(), "coffee".to_string());
-    params.insert(
+    let mut default = HashMap::new();
+    default.insert("api_key".to_string(), api_key);
+    default.insert("q".to_string(), "coffee".to_string());
+    // initialize the search engine
+    let client = SerpApiClient::new(default);
+    
+    let mut parameter = HashMap::new();
+    parameter.insert(
         "location".to_string(),
         "Austin, TX, Texas, United States".to_string(),
     );
-
-    // initialize the search engine
-    let search = SerpApiSearch::google(params, api_key);
+    let mut html_parameter = HashMap::new();
+    html_parameter.clone_from(&parameter);
 
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     println!("waiting...");
-    let results = search.json().await?;
+    let results = client.search(parameter).await?;
     let organic_results = results["organic_results"].as_array().unwrap();
     println!("results received");
     println!("--- JSON ---");
@@ -39,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // search returns text
     println!("--- HTML search ---");
-    let raw = search.html().await?;
+    let raw = client.html(html_parameter).await?;
     print!(" - raw HTML size {} bytes\n", raw.len());
     print!(
         " - async search completed with {}\n",
@@ -48,9 +52,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // // edit the location in the search
     // println!("--- JSON search with a different location ---");
-    // params = HashMap::<String, String>::new();
-    // params.insert("location".to_string(), "Destin, Florida, United States".to_string());
-    // search = SerpApiSearch::google(params, api_key);
+    // parameter = HashMap::<String, String>::new();
+    // parameter.insert("location".to_string(), "Destin, Florida, United States".to_string());
+    // search = SerpApiSearch::google(parameter, api_key);
     // let results = search.json().await?;
     // println!(">> search_parameters: {}", results["search_parameters"]);
     // let places = results["local_results"]["places"].as_array().unwrap();

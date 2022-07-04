@@ -100,6 +100,9 @@ For more information how to build a paramaters HashMap see [serpapi.com document
 - Asyncronous HTTP request handle method using tokio and reqwest
 - Async tests using Tokio
 
+## Reference
+ * https://www.lpalmieri.com/posts/how-to-write-a-rest-client-in-rust-with-reqwest-and-wiremock/
+ 
 ### TODO
  - [ ] more test to close code coverage (each search engine)
  - [ ] add more examples
