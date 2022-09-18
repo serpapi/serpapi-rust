@@ -13,7 +13,7 @@ serpapi-search-rust="0.1.0"
 
 Basic application.
 ```rust
-use serpapi_search_rust::serp_api_search::SerpApiSearch;
+use serpapi_search_rust::serp_api_search::SerpApiClient;
 use std::collections::HashMap;
 use std::env;
 
@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     params.insert("location".to_string(), "Austin, TX, Texas, United States".to_string());
 
     // initialize the search engine
-    let search = SerpApiSearch::google(params, api_key);
+    let search = SerpApiClient::google(params, api_key);
 
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     println!("waiting...");
@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // println!("--- JSON search with a different location ---");
     // params = HashMap::<String, String>::new();
     // params.insert("location".to_string(), "Destin, Florida, United States".to_string());
-    // search = SerpApiSearch::google(params, api_key);
+    // search = SerpApiClient::google(params, api_key);
     // let results = search.json().await?;
     // println!(">> search_parameters: {}", results["search_parameters"]);
     // let places = results["local_results"]["places"].as_array().unwrap();
@@ -107,3 +107,92 @@ For more information how to build a paramaters HashMap see [serpapi.com document
  - [ ] more test to close code coverage (each search engine)
  - [ ] add more examples
  - [ ] better documentation
+
+ ### Search bing
+<%= snippet('rust', 'examples/example_bing_search.rs') %>
+see: [https://serpapi.com/bing-search-api](https://serpapi.com/bing-search-api)
+
+### Search baidu
+<%= snippet('rust', 'examples/example_baidu_search.rs') %>
+see: [https://serpapi.com/baidu-search-api](https://serpapi.com/baidu-search-api)
+
+### Search yahoo
+<%= snippet('rust', 'examples/example_yahoo_search.rs') %>
+see: [https://serpapi.com/yahoo-search-api](https://serpapi.com/yahoo-search-api)
+
+### Search youtube
+<%= snippet('rust', 'examples/example_youtube_search.rs') %>
+see: [https://serpapi.com/youtube-search-api](https://serpapi.com/youtube-search-api)
+
+### Search walmart
+<%= snippet('rust', 'examples/example_walmart_search.rs') %>
+see: [https://serpapi.com/walmart-search-api](https://serpapi.com/walmart-search-api)
+
+### Search ebay
+<%= snippet('rust', 'examples/example_ebay_search.rs') %>
+see: [https://serpapi.com/ebay-search-api](https://serpapi.com/ebay-search-api)
+
+### Search naver
+<%= snippet('rust', 'examples/example_naver_search.rs') %>
+see: [https://serpapi.com/naver-search-api](https://serpapi.com/naver-search-api)
+
+### Search home depot
+<%= snippet('rust', 'examples/example_home_depot_search.rs') %>
+see: [https://serpapi.com/home-depot-search-api](https://serpapi.com/home-depot-search-api)
+
+### Search apple app store
+<%= snippet('rust', 'examples/example_apple_app_store_search.rs') %>
+see: [https://serpapi.com/apple-app-store](https://serpapi.com/apple-app-store)
+
+### Search duckduckgo
+<%= snippet('rust', 'examples/example_duckduckgo_search.rs') %>
+see: [https://serpapi.com/duckduckgo-search-api](https://serpapi.com/duckduckgo-search-api)
+
+### Search google search
+<%= snippet('rust', 'examples/example_google_search_search.rs') %>
+see: [https://serpapi.com/search-api](https://serpapi.com/search-api)
+
+### Search google scholar
+<%= snippet('rust', 'examples/example_google_scholar_search.rs') %>
+see: [https://serpapi.com/google-scholar-api](https://serpapi.com/google-scholar-api)
+
+### Search google autocomplete
+<%= snippet('rust', 'examples/example_google_autocomplete_search.rs') %>
+see: [https://serpapi.com/google-autocomplete-api](https://serpapi.com/google-autocomplete-api)
+
+### Search google product
+<%= snippet('rust', 'examples/example_google_product_search.rs') %>
+see: [https://serpapi.com/google-product-api](https://serpapi.com/google-product-api)
+
+### Search google reverse image
+<%= snippet('rust', 'examples/example_google_reverse_image_search.rs') %>
+see: [https://serpapi.com/google-reverse-image](https://serpapi.com/google-reverse-image)
+
+### Search google events
+<%= snippet('rust', 'examples/example_google_events_search.rs') %>
+see: [https://serpapi.com/google-events-api](https://serpapi.com/google-events-api)
+
+### Search google local services
+<%= snippet('rust', 'examples/example_google_local_services_search.rs') %>
+see: [https://serpapi.com/google-local-services-api](https://serpapi.com/google-local-services-api)
+
+### Search google maps
+<%= snippet('rust', 'examples/example_google_maps_search.rs') %>
+see: [https://serpapi.com/google-maps-api](https://serpapi.com/google-maps-api)
+
+### Search google jobs
+<%= snippet('rust', 'examples/example_google_jobs_search.rs') %>
+see: [https://serpapi.com/google-jobs-api](https://serpapi.com/google-jobs-api)
+
+### Search google play
+<%= snippet('rust', 'examples/example_google_play_search.rs') %>
+see: [https://serpapi.com/google-play-api](https://serpapi.com/google-play-api)
+
+### Search google images
+<%= snippet('rust', 'examples/example_google_images_search.rs') %>
+see: [https://serpapi.com/images-results](https://serpapi.com/images-results)
+
+Reference
+----
+
+https://github.com/serde-rs/json

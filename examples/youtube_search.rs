@@ -1,4 +1,5 @@
-use serpapi::serpapi::SerpApiClient;
+// reference example google search
+use serpapi::serpapi::Client;
 use std::collections::HashMap;
 use std::env;
 
@@ -14,48 +15,47 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("let's search about coffee on google");
     let mut default = HashMap::new();
     default.insert("api_key".to_string(), api_key);
-    default.insert("q".to_string(), "coffee".to_string());
+    default.insert("engine".to_string(), "youtube".to_string());
     // initialize the search engine
-    let client = SerpApiClient::new(default);
-    
+    let client = Client::new(default);
+
     let mut parameter = HashMap::new();
-    parameter.insert(
-        "location".to_string(),
-        "Austin, TX, Texas, United States".to_string(),
-    );
+    parameter.insert("search_query".to_string(), "coffee".to_string());
+
     let mut html_parameter = HashMap::new();
+    println!("{:?}", parameter);
     html_parameter.clone_from(&parameter);
+    println!("{:?}", html_parameter);
 
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     println!("waiting...");
     let results = client.search(parameter).await?;
-    let organic_results = results["organic_results"].as_array().unwrap();
+    let video_results = results["video_results"].as_array().unwrap();
     println!("results received");
     println!("--- JSON ---");
-    println!(" - number of organic results: {}", organic_results.len());
+    println!(" - number of video results: {}", video_results.len());
     println!(
-        " - organic_results first result description: {}",
-        results["organic_results"][0]["about_this_result"]["source"]["description"]
+        " - video_results first result description: {}",
+        results["video_results"][0]["about_this_result"]["source"]["description"]
     );
-    let places = results["local_results"]["places"].as_array().unwrap();
-    println!("number of local_results: {}", places.len());
-    println!(" - local_results first address: {}", places[0]["address"]);
+    print!(
+        " - async search completed with {:?}\n",
+        results["search_parameters"]
+    );
 
     // search returns text
     println!("--- HTML search ---");
+    println!("{:?}", html_parameter);
     let raw = client.html(html_parameter).await?;
+    println!(">> {:?}", raw);
     print!(" - raw HTML size {} bytes\n", raw.len());
-    print!(
-        " - async search completed with {}\n",
-        results["search_parameters"]["engine"]
-    );
 
     // // edit the location in the search
     // println!("--- JSON search with a different location ---");
     // parameter = HashMap::<String, String>::new();
     // parameter.insert("location".to_string(), "Destin, Florida, United States".to_string());
-    // search = SerpApiSearch::google(parameter, api_key);
-    // let results = search.json().await?;
+    // client = Client::google(parameter, api_key);
+    // let results = client.json().await?;
     // println!(">> search_parameters: {}", results["search_parameters"]);
     // let places = results["local_results"]["places"].as_array().unwrap();
     // println!("number of local_results: {}\n", places.len());

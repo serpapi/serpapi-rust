@@ -14,11 +14,15 @@ task :test do
 end
 
 task :doc do 
-  sh("cargo doc")
+  sh("cargo doc --no-deps --examples")
 end
 
 task :oobt do 
-  sh("cargo run --example example_google_search")
+  Dir.glob('examples/*.rs').each do |path|
+    name = File.basename(path, '.rs')
+    ENV['RUST_BACKTRACE'] = '1'
+    sh("cargo run --example #{name}")
+  end
 end
 
 task :release => [:fmt, :test, :oobt] do 

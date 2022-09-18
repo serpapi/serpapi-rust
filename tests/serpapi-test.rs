@@ -1,7 +1,7 @@
 //#[cfg(test)]
 #![cfg(not(target_arch = "wasm32"))]
 
-use serpapi::serpapi::SerpApiClient;
+use serpapi::serpapi::Client;
 use std::collections::HashMap;
 
 fn api_key() -> String {
@@ -19,11 +19,14 @@ async fn json() {
     default.insert("api_key".to_string(), api_key());
 
     // initialize the search engine
-    let client = SerpApiClient::new(default);
+    let client = Client::new(default);
 
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("q".to_string(), "coffee".to_string());
-    parameter.insert("location".to_string(), "Austin, TX, Texas, United States".to_string());
+    parameter.insert(
+        "location".to_string(),
+        "Austin, TX, Texas, United States".to_string(),
+    );
 
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     let results = client.search(parameter).await.expect("request");
@@ -41,18 +44,22 @@ async fn html() {
     default.insert("api_key".to_string(), api_key());
 
     // initialize the search engine
-    let client = SerpApiClient::new(default);
+    let client = Client::new(default);
 
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("q".to_string(), "coffee".to_string());
-    parameter.insert("location".to_string(), "Austin, TX, Texas, United States".to_string());
+    parameter.insert(
+        "location".to_string(),
+        "Austin, TX, Texas, United States".to_string(),
+    );
     let html = client.html(parameter).await.expect("request");
     assert!(html.len() > 100);
 }
 
 #[tokio::test]
 async fn location() {
-    let client = SerpApiClient::new(HashMap::<String, String>::new());
+    let default = HashMap::<String, String>::new();
+    let client = Client::new(default);
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("q".to_string(), "Austin".to_string());
     let data = client.location(parameter).await.expect("request");
@@ -66,8 +73,8 @@ async fn location() {
 
 #[tokio::test]
 async fn get_account() {
-    let client = SerpApiClient::new( HashMap::<String, String>::new());
-    let mut parameter =  HashMap::<String, String>::new();
+    let client = Client::new(HashMap::<String, String>::new());
+    let mut parameter = HashMap::<String, String>::new();
     parameter.insert("api_key".to_string(), api_key());
     let account = client.account(parameter).await.expect("request");
     assert_eq!(account["api_key"], api_key());
@@ -79,12 +86,15 @@ async fn search_archive() {
     let mut default = HashMap::<String, String>::new();
     default.insert("engine".to_string(), "google".to_string());
     default.insert("api_key".to_string(), api_key());
-    let client = SerpApiClient::new(default);
+    let client = Client::new(default);
 
     // initialize the search engine
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("q".to_string(), "coffee".to_string());
-    parameter.insert("location".to_string(), "Austin, TX, Texas, United States".to_string());
+    parameter.insert(
+        "location".to_string(),
+        "Austin, TX, Texas, United States".to_string(),
+    );
     let initial_results = client.search(parameter).await.expect("request");
     let mut id = initial_results["search_metadata"]["id"].to_string();
     // remove extra quote " from string convertion
