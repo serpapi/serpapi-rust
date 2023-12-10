@@ -35,7 +35,7 @@ impl Client {
         &self,
         parameter: HashMap<String, String>,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-        let results = self.json("/search", parameter).await?;
+        let results = self.json("/search.json", parameter).await?;
         Ok(results)
     }
 
@@ -65,7 +65,7 @@ impl Client {
         &self,
         parameter: HashMap<String, String>,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let body = self.get("/html", parameter).await?;
+        let body = self.get("/search", parameter).await?;
         Ok(body)
     }
 
@@ -103,7 +103,6 @@ impl Client {
         let mut endpoint = "/searches/".to_string();
         endpoint.push_str(search_id);
         endpoint.push_str(".json");
-        println!(">> {}", endpoint);
         let results = self.json(&endpoint, HashMap::new()).await?;
         Ok(results)
     }
@@ -123,8 +122,7 @@ impl Client {
         parameter: HashMap<String, String>,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let body = self.get(endpoint, parameter).await?;
-        println!("Body:\n{}", body);
-        let value: serde_json::Value = serde_json::from_str(&body).unwrap();
+        let value: serde_json::Value = serde_json::from_str(&body)?;
         Ok(value)
     }
 
@@ -144,7 +142,7 @@ impl Client {
             query.insert(key.to_string(), value.to_string());
         }
 
-        let mut url = "http://serpapi.com".to_string();
+        let mut url = "https://serpapi.com".to_string();
         url.push_str(endpoint);
         let client = reqwest::Client::builder().build()?;
         let res = client.get(url).query(&query).send().await?;
