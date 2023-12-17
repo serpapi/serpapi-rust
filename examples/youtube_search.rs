@@ -1,7 +1,8 @@
 // reference example google search
-use serpapi::serpapi::Client;
+use serpapi::Client;
 use std::collections::HashMap;
 use std::env;
+use serde_json::Value;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -29,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     println!("waiting...");
-    let results = client.search(parameter).await?;
+    let results: Value = client.search(parameter).await?;
     let video_results = results["video_results"].as_array().unwrap();
     println!("results received");
     println!("--- JSON ---");

@@ -1,5 +1,5 @@
 // reference example google search
-use serpapi::serpapi::Client;
+use serpapi::Client;
 use std::collections::HashMap;
 use std::env;
 

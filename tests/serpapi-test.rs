@@ -1,8 +1,9 @@
 //#[cfg(test)]
 #![cfg(not(target_arch = "wasm32"))]
 
-use serpapi::serpapi::Client;
+use serpapi::Client;
 use std::collections::HashMap;
+use serde_json::Value;
 
 fn api_key() -> String {
     let api_key = match std::env::var_os("API_KEY") {
@@ -29,7 +30,7 @@ async fn json() {
     );
 
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
-    let results = client.search(parameter).await.expect("request");
+    let results: Value = client.search(parameter).await.expect("request");
     let organic_results = results["organic_results"].as_array().unwrap();
     assert!(organic_results.len() > 1);
 
@@ -62,7 +63,7 @@ async fn location() {
     let client = Client::new(default);
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("q".to_string(), "Austin".to_string());
-    let data = client.location(parameter).await.expect("request");
+    let data: Value = client.location(parameter).await.expect("request");
     let locations = data.as_array().unwrap();
     assert!(locations.len() > 3);
     assert_eq!(locations[0]["id"], "585069bdee19ad271e9bc072");
@@ -76,7 +77,7 @@ async fn get_account() {
     let client = Client::new(HashMap::<String, String>::new());
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("api_key".to_string(), api_key());
-    let account = client.account(parameter).await.expect("request");
+    let account: Value = client.account(parameter).await.expect("request");
     assert_eq!(account["api_key"], api_key());
     assert_ne!(account["account_email"], "");
 }
@@ -95,18 +96,18 @@ async fn search_archive() {
         "location".to_string(),
         "Austin, TX, Texas, United States".to_string(),
     );
-    let initial_results = client.search(parameter).await.expect("request");
+    let initial_results: Value = client.search(parameter).await.expect("request");
     let mut id = initial_results["search_metadata"]["id"].to_string();
     // remove extra quote " from string convertion
     id = id.replace("\"", "");
 
-    println!("{}", initial_results["search_metadata"]);
+    // println!("{}", initial_results["search_metadata"]);
     assert_ne!(id, "");
 
     // search in archive
-    let archived_results = client.search_archive(&id).await.expect("request");
+    let archived_results: Value = client.search_archive(&id).await.expect("request");
     let archive_id = archived_results["search_metadata"]["id"].as_str();
     let search_id = initial_results["search_metadata"]["id"].as_str();
-    println!("{}", archived_results);
+    // println!("{}", archived_results);
     assert_eq!(archive_id, search_id);
 }
