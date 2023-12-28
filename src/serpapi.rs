@@ -16,6 +16,8 @@ pub struct Client {
     pub parameter: HashMap<String, String>,
 }
 
+const HOST: &str = "http://serpapi.com";
+
 impl Client {
     /// initialize a serp api client with default parameters.
     /// # Arguments
@@ -31,6 +33,30 @@ impl Client {
     /// # Arguments
     ///  * `parameter` search parameter
     ///
+    /// # Examples:
+    /// ```
+    /// use std::collections::HashMap;
+    /// use serpapi::serpapi::Client;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///  let mut default = std::collections::HashMap::<String, String>::new();
+    ///  default.insert("engine".to_string(), "google".to_string());
+    ///  default.insert("api_key".to_string(), "secret_api_key".to_string());
+    ///  // initialize the serpapi client
+    ///  let client = Client::new(default);
+    ///  let mut parameter = HashMap::<String, String>::new();
+    ///  parameter.insert("q".to_string(), "coffee".to_string());
+    ///  parameter.insert(
+    ///      "location".to_string(),
+    ///      "Austin, TX, Texas, United States".to_string(),
+    ///  );
+    ///  // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
+    ///  let results = client.search(parameter).await.expect("request");
+    ///  // let organic_results = results["organic_results"].as_array().unwrap();
+    ///  // assert!(organic_results.len() > 1);
+    /// }
+    /// ```
     pub async fn search(
         &self,
         parameter: HashMap<String, String>,
@@ -123,7 +149,7 @@ impl Client {
         parameter: HashMap<String, String>,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let body = self.get(endpoint, parameter).await?;
-        println!("Body:\n{}", body);
+        //debug: println!("Body:\n{}", body);
         let value: serde_json::Value = serde_json::from_str(&body).unwrap();
         Ok(value)
     }
@@ -144,7 +170,7 @@ impl Client {
             query.insert(key.to_string(), value.to_string());
         }
 
-        let mut url = "http://serpapi.com".to_string();
+        let mut url = HOST.to_string();
         url.push_str(endpoint);
         let client = reqwest::Client::builder().build()?;
         let res = client.get(url).query(&query).send().await?;

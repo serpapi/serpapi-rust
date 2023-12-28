@@ -13,7 +13,7 @@ fn api_key() -> String {
 }
 
 #[tokio::test]
-async fn json() {
+async fn search() {
     let mut default = std::collections::HashMap::<String, String>::new();
     default.insert("engine".to_string(), "google".to_string());
     default.insert("api_key".to_string(), api_key());
@@ -72,7 +72,7 @@ async fn location() {
 }
 
 #[tokio::test]
-async fn get_account() {
+async fn account() {
     let client = Client::new(HashMap::<String, String>::new());
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("api_key".to_string(), api_key());
