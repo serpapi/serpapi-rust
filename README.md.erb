@@ -1,0 +1,298 @@
+<%-
+def snippet(format, path, demo = false) 
+ lines = File.new(path).readlines
+ if demo
+  buf = lines[1..-1].join
+ else
+  stop = lines.find_index { |line| line =~ /Ok\(\(\)\)/}
+  slice = File.new(path).readlines[19..stop]
+  slice.reject! { |l| l =~ /expect\(/ }
+  buf = slice.map { |l| l.gsub(/(^\s\s\s\s)/, '')}.join
+  buf.gsub!('api_key)', '"your_secret_api_key".to_string())')
+ end
+ %Q(```#{format}\n#{buf}\n```\n\n * source code: [#{path}](https://github.com/serpapi/serpapi-rust/blob/master/#{path}))
+end
+-%>
+
+# SerpApi Search in Rust
+[![CI](https://github.com/serpapi/serpapi-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/serpapi/serpapi-rust/actions/workflows/ci.yml) [![serpapi-rust](https://img.shields.io/crates/v/serpapi.svg)](https://crates.io/crates/serpapi)
+
+This Rust package enables to scrape and parse search results from Google, Bing, Baidu, Yandex, Yahoo, Ebay, Apple, Youtube, Naver, Home depot and more. It's powered by [SerpApi](https://serpapi.com) which delivered a consistent JSON format accross search engines.
+SerpApi.com enables to do localized search, leverage advanced search engine features and a lot more...
+A completed documentation is available at [SerpApi](https://serpapi.com).
+
+## Installation
+
+To install in your rust application, update Cargo.toml
+```sh
+serpapi="1.0.0"
+```
+
+## Usage
+
+Let's start by searching for Coffee on Google:
+
+```rust
+// search example for google
+//
+use serpapi::serpapi::Client;
+use std::collections::HashMap;
+use std::env;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Read your private API Key from an environment variable.
+    // Copy/paste from [https://serpapi.com/dashboard] to your shell:
+    // ```bash
+    // export API_key="paste_your_private_api_key"
+    // ```
+    let api_key = match env::var_os("API_KEY") {
+        Some(v) => v.into_string().unwrap(),
+        None => panic!("$API_KEY environment variable is not set!"),
+    };
+
+    println!("let's initiliaze the client to search on google");
+    let mut default = HashMap::new();
+    default.insert("api_key".to_string(), api_key);
+    default.insert("engine".to_string(), "google".to_string());
+    // initialize the search engine
+    let client = Client::new(default);
+
+    // let's search for coffee in Austin, TX
+    let mut parameter = HashMap::new();
+    parameter.insert("q".to_string(), "coffee".to_string());
+    parameter.insert("engine".to_string(), "google".to_string());
+    // copy search parameter for the html search
+    let mut html_parameter = HashMap::new();
+    html_parameter.clone_from(&parameter);
+
+    // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
+    println!("waiting...");
+    let results = client.search(parameter).await?;
+    let organic_results = results["organic_results"].as_array().unwrap();
+    println!("results received");
+    println!("--- JSON ---");
+    let status = &results["search_metadata"]["status"];
+    if status != "Success" {
+        println!("search failed with status: {}", status);
+    } else {
+        println!("search is successfull");
+
+        println!(" - number of organic_results: {}", organic_results.len());
+        println!(
+            " - organic_results first result description: {}",
+            results["organic_results"][0]
+        );
+
+        // search returns text
+        println!("--- HTML search ---");
+        let raw = client.html(html_parameter).await.expect("html content");
+        println!(" - raw HTML size {} bytes\n", raw.len());
+        println!(
+            " - async search completed with {}\n",
+            results["search_parameters"]["engine"]
+        );
+    }
+
+    print!("ok");
+    Ok(())
+}
+```
+
+[Google search documentation](https://serpapi.com/search-api).
+More hands on examples are available below.
+
+#### Documentations
+
+ * [Full documentation on SerpApi.com](https://serpapi.com)
+ * [API health status](https://serpapi.com/status)
+
+For more information how to build a paramaters HashMap see [serpapi.com documentation](https://serpapi.com/search-api)
+
+### Location API
+
+```rust
+let default = HashMap::<String, String>::new();
+let client = Client::new(default);
+let mut parameter = HashMap::<String, String>::new();
+parameter.insert("q".to_string(), "Austin".to_string());
+let data = client.location(parameter).await.expect("request");
+let locations = data.as_array().unwrap();
+```
+
+It returns the first 3 locations matching Austin (Texas, Texas, Rochester)
+
+
+### Search Archive API
+
+```rust
+let mut default = HashMap::<String, String>::new();
+default.insert("engine".to_string(), "google".to_string());
+default.insert("api_key".to_string(), "your_secret_key".to_string());
+let client = Client::new(default);
+
+// initialize the search engine
+let mut parameter = HashMap::<String, String>::new();
+parameter.insert("q".to_string(), "coffee".to_string());
+parameter.insert(
+    "location".to_string(),
+    "Austin, TX, Texas, United States".to_string(),
+);
+let initial_results = client.search(parameter).await.expect("request");
+let mut id = initial_results["search_metadata"]["id"].to_string();
+// remove extra quote " from string convertion
+id = id.replace("\"", "");
+
+println!("{}", initial_results["search_metadata"]);
+assert_ne!(id, "");
+
+// search in archive
+let archived_results = client.search_archive(&id).await.expect("request");
+let archive_id = archived_results["search_metadata"]["id"].as_str();
+let search_id = initial_results["search_metadata"]["id"].as_str();
+println!("{}", archived_results);
+assert_eq!(archive_id, search_id);
+```
+
+### Account API
+```rust
+let client = Client::new(HashMap::<String, String>::new());
+let mut parameter = HashMap::<String, String>::new();
+parameter.insert("api_key".to_string(), "your_secret_key".to_string());
+let account = client.account(parameter).await.expect("request");
+```
+
+It returns your account information.
+
+### Technical features
+- Dynamic JSON decoding using Serde JSON
+- Asyncronous HTTP request handle method using tokio and reqwest
+- Async tests using Tokio
+
+### References
+ * https://www.lpalmieri.com/posts/how-to-write-a-rest-client-in-rust-with-reqwest-and-wiremock/
+ *  Serdes JSON
+
+## Examples in rust
+
+To run an example:
+```sh
+cargo build --example google_search
+```
+file: (examples/google_search.rs)
+
+The keyword google can be replaced by any supported search engine:
+- google
+- baidu
+- bing
+- duckduckgo
+- yahoo
+- yandex
+- ebay
+- youtube
+- walmart
+- home_depot
+- apple_app_store
+- naver
+
+### Search bing
+<%= snippet('rust', 'examples/bing_search.rs') %>
+see: [https://serpapi.com/bing-search-api](https://serpapi.com/bing-search-api)
+
+### Search baidu
+<%= snippet('rust', 'examples/baidu_search.rs') %>
+see: [https://serpapi.com/baidu-search-api](https://serpapi.com/baidu-search-api)
+
+### Search yahoo
+<%= snippet('rust', 'examples/yahoo_search.rs') %>
+see: [https://serpapi.com/yahoo-search-api](https://serpapi.com/yahoo-search-api)
+
+### Search youtube
+<%= snippet('rust', 'examples/youtube_search.rs') %>
+see: [https://serpapi.com/youtube-search-api](https://serpapi.com/youtube-search-api)
+
+### Search walmart
+<%= snippet('rust', 'examples/walmart_search.rs') %>
+see: [https://serpapi.com/walmart-search-api](https://serpapi.com/walmart-search-api)
+
+### Search ebay
+<%= snippet('rust', 'examples/ebay_search.rs') %>
+see: [https://serpapi.com/ebay-search-api](https://serpapi.com/ebay-search-api)
+
+### Search naver
+<%= snippet('rust', 'examples/naver_search.rs') %>
+see: [https://serpapi.com/naver-search-api](https://serpapi.com/naver-search-api)
+
+### Search home depot
+<%= snippet('rust', 'examples/home_depot_search.rs') %>
+see: [https://serpapi.com/home-depot-search-api](https://serpapi.com/home-depot-search-api)
+
+### Search apple app store
+<%= snippet('rust', 'examples/apple_app_store_search.rs') %>
+see: [https://serpapi.com/apple-app-store](https://serpapi.com/apple-app-store)
+
+### Search duckduckgo
+<%= snippet('rust', 'examples/duckduckgo_search.rs') %>
+see: [https://serpapi.com/duckduckgo-search-api](https://serpapi.com/duckduckgo-search-api)
+
+### Search google
+<%= snippet('rust', 'examples/google_search.rs') %>
+see: [https://serpapi.com/search-api](https://serpapi.com/search-api)
+
+### Search google scholar
+<%= snippet('rust', 'examples/google_scholar_search.rs') %>
+see: [https://serpapi.com/google-scholar-api](https://serpapi.com/google-scholar-api)
+
+### Search google autocomplete
+<%= snippet('rust', 'examples/google_autocomplete_search.rs') %>
+see: [https://serpapi.com/google-autocomplete-api](https://serpapi.com/google-autocomplete-api)
+
+### Search google product
+<%= snippet('rust', 'examples/google_product_search.rs') %>
+see: [https://serpapi.com/google-product-api](https://serpapi.com/google-product-api)
+
+### Search google reverse image
+<%= snippet('rust', 'examples/google_reverse_image_search.rs') %>
+see: [https://serpapi.com/google-reverse-image](https://serpapi.com/google-reverse-image)
+
+### Search google events
+<%= snippet('rust', 'examples/google_events_search.rs') %>
+see: [https://serpapi.com/google-events-api](https://serpapi.com/google-events-api)
+
+### Search google local services
+<%= snippet('rust', 'examples/google_local_services_search.rs') %>
+see: [https://serpapi.com/google-local-services-api](https://serpapi.com/google-local-services-api)
+
+### Search google maps
+<%= snippet('rust', 'examples/google_maps_search.rs') %>
+see: [https://serpapi.com/google-maps-api](https://serpapi.com/google-maps-api)
+
+### Search google jobs
+<%= snippet('rust', 'examples/google_jobs_search.rs') %>
+see: [https://serpapi.com/google-jobs-api](https://serpapi.com/google-jobs-api)
+
+### Search google play
+<%= snippet('rust', 'examples/google_play_search.rs') %>
+see: [https://serpapi.com/google-play-api](https://serpapi.com/google-play-api)
+
+### Search google images
+<%= snippet('rust', 'examples/google_images_search.rs') %>
+see: [https://serpapi.com/images-results](https://serpapi.com/images-results)
+
+## License
+
+MIT License
+
+## Continuous integration
+We love "true open source" and "continuous integration", and Test Drive Development (TDD).
+ We are using RSpec to test [our infrastructure around the clock]) using Github Action to achieve the best QoS (Quality Of Service).
+
+The directory spec/ includes specification which serves the dual purposes of examples and functional tests.
+
+Set your secret API key in your shell before running a test.
+```bash
+export API_KEY="your_secret_key"
+cargo test
+```
+
+Contributions are welcome. Feel to submit a pull request!
