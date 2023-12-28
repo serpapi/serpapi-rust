@@ -1,4 +1,4 @@
-// search example for youtube
+// search example for ebay
 //
 use serpapi::serpapi::Client;
 use std::collections::HashMap;
@@ -16,16 +16,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => panic!("$API_KEY environment variable is not set!"),
     };
 
-    println!("let's initiliaze the client to search on youtube");
+    println!("let's initiliaze the client to search on ebay");
     let mut default = HashMap::new();
     default.insert("api_key".to_string(), api_key);
-    default.insert("engine".to_string(), "youtube".to_string());
+    default.insert("engine".to_string(), "ebay".to_string());
     // initialize the search engine
     let client = Client::new(default);
 
     // let's search for coffee in Austin, TX
     let mut parameter = HashMap::new();
-    parameter.insert("search_query".to_string(), "coffee".to_string());
+    parameter.insert("_nkw".to_string(), "coffee".to_string());
     // copy search parameter for the html search
     let mut html_parameter = HashMap::new();
     html_parameter.clone_from(&parameter);
@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     println!("waiting...");
     let results = client.search(parameter).await?;
-    let video_results = results["video_results"].as_array().unwrap();
+    let organic_results = results["organic_results"].as_array().unwrap();
     println!("results received");
     println!("--- JSON ---");
     let status = &results["search_metadata"]["status"];
@@ -42,10 +42,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("search is successfull");
 
-        println!(" - number of video_results: {}", video_results.len());
+        println!(" - number of organic_results: {}", organic_results.len());
         println!(
-            " - video_results first result description: {}",
-            results["video_results"][0]
+            " - organic_results first result description: {}",
+            results["organic_results"][0]
         );
 
         // search returns text
