@@ -9,7 +9,7 @@ documentation = "https://serpapi.com/search-api"
 repository = "https://github.com/serpapi/serpapi-rust"
 license = "MIT"
 authors = ["Victor Benarbia <victor@serpapi.com>"]
-keywords = ["serp", "google", "search", "engine", "scrape", "baidu", "apple", "client", "api", "serpapi", "homedepot"]
+keywords = ["google", "search", "engine", "scrape", "serpapi"]
 categories = ["network-programming", "parsing", "web-programming::http-client", "api-bindings"]
 
 include = [
