@@ -1,8 +1,8 @@
 [package]
 name = "serpapi"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
-description = "Get Google, Bing, Baidu, Ebay, Yahoo, Yandex, Home depot, Naver, Apple, youtube Ssearch Results via SerpApi.com"
+description = "Integrate search data into your Ruby application. This library is the official wrapper for SerpApi. SerpApi supports Google, Google Maps, Google Shopping, Baidu, Yandex, Yahoo, eBay, App Stores, and more."
 readme = "README.md"
 homepage = "https://serpapi.com"
 documentation = "https://serpapi.com/search-api"
@@ -22,7 +22,6 @@ include = [
 
 [dependencies]
 # json parser
-# serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 # Asynchronous runtime
 tokio = { version = "1", features = ["full"] }
