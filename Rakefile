@@ -34,6 +34,8 @@ task :oobt do
   end
 end
 
-task :release => [:fmt, :test, :doc, :readme, :oobt] do 
+task :publish do 
   sh("cargo publish")
 end
+
+task :release => [:fmt, :test, :doc, :readme, :oobt, :publish]
