@@ -1,4 +1,4 @@
-name: CI
+name: serpapi-rust
 
 on:
   push:
