@@ -14,6 +14,7 @@ use std::collections::HashMap;
 pub struct Client {
     // search parameter like: q=coffee for google
     pub parameter: HashMap<String, String>,
+    pub http: reqwest::Client,
 }
 
 const HOST: &str = "http://serpapi.com";
@@ -22,10 +23,11 @@ impl Client {
     /// initialize a serp api client with default parameters.
     /// # Arguments
     /// * `parameter` allows to set default parameter like: api_key or engine for the client.
-    pub fn new(parameter: HashMap<String, String>) -> Client {
-        Client {
-            parameter: parameter,
-        }
+    pub fn new(parameter: HashMap<String, String>) -> Result<Client, Box<dyn std::error::Error>> {
+        let http = reqwest::Client::builder().build()?;
+        let client = Client { parameter, http };
+
+        Ok(client)
     }
 
     /// execute a search on serpapi.com
@@ -44,7 +46,7 @@ impl Client {
     ///  default.insert("engine".to_string(), "google".to_string());
     ///  default.insert("api_key".to_string(), "secret_api_key".to_string());
     ///  // initialize the serpapi client
-    ///  let client = Client::new(default);
+    ///  let client = Client::new(default).unwrap();
     ///  let mut parameter = HashMap::<String, String>::new();
     ///  parameter.insert("q".to_string(), "coffee".to_string());
     ///  parameter.insert(
@@ -79,7 +81,7 @@ impl Client {
     /// default.insert("engine".to_string(), "google".to_string());
     /// default.insert("api_key".to_string(), "secret_api_key".to_string());
     /// // initialize the search engine
-    /// let client = Client::new(default);
+    /// let client = Client::new(default).unwrap();
     /// let mut parameter = HashMap::<String, String>::new();
     /// parameter.insert("q".to_string(), "coffee".to_string());
     /// parameter.insert("location".to_string(), "Austin, TX, Texas, United States".to_string());
@@ -172,8 +174,7 @@ impl Client {
 
         let mut url = HOST.to_string();
         url.push_str(endpoint);
-        let client = reqwest::Client::builder().build()?;
-        let res = client.get(url).query(&query).send().await?;
+        let res = self.http.get(url).query(&query).send().await?;
         let body = res.text().await?;
         Ok(body)
     }
