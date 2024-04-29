@@ -19,7 +19,7 @@ async fn search() {
     default.insert("api_key".to_string(), api_key());
 
     // initialize the search engine
-    let client = Client::new(default);
+    let client = Client::new(default).unwrap();
 
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("q".to_string(), "coffee".to_string());
@@ -44,7 +44,7 @@ async fn html() {
     default.insert("api_key".to_string(), api_key());
 
     // initialize the search engine
-    let client = Client::new(default);
+    let client = Client::new(default).unwrap();
 
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("q".to_string(), "coffee".to_string());
@@ -59,7 +59,7 @@ async fn html() {
 #[tokio::test]
 async fn location() {
     let default = HashMap::<String, String>::new();
-    let client = Client::new(default);
+    let client = Client::new(default).unwrap();
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("q".to_string(), "Austin".to_string());
     let data = client.location(parameter).await.expect("request");
@@ -73,7 +73,7 @@ async fn location() {
 
 #[tokio::test]
 async fn account() {
-    let client = Client::new(HashMap::<String, String>::new());
+    let client = Client::new(HashMap::<String, String>::new()).unwrap();
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("api_key".to_string(), api_key());
     let account = client.account(parameter).await.expect("request");
@@ -86,7 +86,7 @@ async fn search_archive() {
     let mut default = HashMap::<String, String>::new();
     default.insert("engine".to_string(), "google".to_string());
     default.insert("api_key".to_string(), api_key());
-    let client = Client::new(default);
+    let client = Client::new(default).unwrap();
 
     // initialize the search engine
     let mut parameter = HashMap::<String, String>::new();
