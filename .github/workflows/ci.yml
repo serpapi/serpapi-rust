@@ -21,10 +21,10 @@ jobs:
     - name: Example
       run: cargo build --example google_search
       env:
-          API_KEY: ${{secrets.API_KEY}}
+          SERPAPI_KEY: ${{secrets.SERPAPI_KEY}}
     - name: Run tests
       run: cargo test --verbose
       env:
-          API_KEY: ${{secrets.API_KEY}}
+          SERPAPI_KEY: ${{secrets.SERPAPI_KEY}}
 
     

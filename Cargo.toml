@@ -1,15 +1,15 @@
 [package]
 name = "serpapi"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
-description = "Integrate search data into your Ruby application. This library is the official wrapper for SerpApi. SerpApi supports Google, Google Maps, Google Shopping, Baidu, Yandex, Yahoo, eBay, App Stores, and more."
+description = "Integrate search data into your rust application. This library is the official wrapper for SerpApi. SerpApi supports Google, Google Maps, Google Shopping, Baidu, Yandex, Yahoo, eBay, App Stores, and more."
 readme = "README.md"
 homepage = "https://serpapi.com"
 documentation = "https://serpapi.com/search-api"
 repository = "https://github.com/serpapi/serpapi-rust"
 license = "MIT"
 authors = ["Victor Benarbia <victor@serpapi.com>"]
-keywords = ["google", "search", "engine", "scrape", "serpapi"]
+keywords = ["google", "search", "engine", "scrape", "serpapi", "web", "train", "mcp", "llm"]
 categories = ["network-programming", "parsing", "web-programming::http-client", "api-bindings"]
 
 include = [

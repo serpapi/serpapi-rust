@@ -107,7 +107,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    /// let client = Client::new(HashMap::<String, String>::new());
+    /// let client = Client::new(HashMap::<String, String>::new()).unwrap();
     /// let mut parameter = HashMap::<String, String>::new();
     /// parameter.insert("q".to_string(), "Austin".to_string());
     /// let data = client.location(parameter).await.expect("request");

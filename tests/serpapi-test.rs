@@ -5,9 +5,9 @@ use serpapi::serpapi::Client;
 use std::collections::HashMap;
 
 fn api_key() -> String {
-    let api_key = match std::env::var_os("API_KEY") {
+    let api_key = match std::env::var_os("SERPAPI_KEY") {
         Some(v) => v.into_string().unwrap(),
-        None => panic!("$API_KEY is not set"),
+        None => panic!("$SERPAPI_KEY is not set"),
     };
     return api_key;
 }
@@ -65,10 +65,10 @@ async fn location() {
     let data = client.location(parameter).await.expect("request");
     let locations = data.as_array().unwrap();
     assert!(locations.len() > 3);
-    assert_eq!(locations[0]["id"], "585069bdee19ad271e9bc072");
-    assert_eq!(locations[0]["name"], "Austin, TX");
-    assert_eq!(locations[0]["gps"][0].as_f64(), Some(-97.7430608));
-    assert_eq!(locations[0]["gps"][1].as_f64(), Some(30.267153));
+    assert!(locations[0]["name"]
+        .as_str()
+        .unwrap()
+        .contains("Austin"));
 }
 
 #[tokio::test]

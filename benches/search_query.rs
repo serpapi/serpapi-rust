@@ -6,7 +6,7 @@
 //! - CPU performance (JSON parsing)
 //!
 //! Usage:
-//!   export API_KEY=your_api_key
+//!   export SERPAPI_KEY=your_api_key
 //!   cargo bench --bench search_query
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
@@ -26,7 +26,7 @@ fn setup_client() -> Client {
     let mut default = HashMap::<String, String>::new();
     default.insert("engine".to_string(), "google".to_string());
     default.insert("api_key".to_string(), api_key());
-    Client::new(default)
+    Client::new(default).unwrap()
 }
 
 fn setup_search_params() -> HashMap<String, String> {
