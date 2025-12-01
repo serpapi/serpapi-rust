@@ -21,12 +21,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     default.insert("api_key".to_string(), api_key);
     default.insert("engine".to_string(), "google_maps".to_string());
     // initialize the search engine
-    let client = Client::new(default);
+    let client = Client::new(default).unwrap();
 
     // let's search for coffee in Austin, TX
     let mut parameter = HashMap::new();
     parameter.insert("q".to_string(), "pizza".to_string());
-    parameter.insert("ll".to_string(), "@40.7455096,-74.0083012,15.1z".to_string());
+    parameter.insert(
+        "ll".to_string(),
+        "@40.7455096,-74.0083012,15.1z".to_string(),
+    );
     parameter.insert("type".to_string(), "search".to_string());
     // copy search parameter for the html search
     let mut html_parameter = HashMap::new();

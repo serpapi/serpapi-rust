@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     default.insert("api_key".to_string(), api_key);
     default.insert("engine".to_string(), "google".to_string());
     // initialize the search engine
-    let client = Client::new(default);
+    let client = Client::new(default).unwrap();
 
     // let's search for coffee in Austin, TX
     let mut parameter = HashMap::new();
@@ -98,7 +98,7 @@ For more information how to build a paramaters HashMap see [serpapi.com document
 
 ```rust
 let default = HashMap::<String, String>::new();
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 let mut parameter = HashMap::<String, String>::new();
 parameter.insert("q".to_string(), "Austin".to_string());
 let data = client.location(parameter).await.expect("request");
@@ -114,7 +114,7 @@ It returns the first 3 locations matching Austin (Texas, Texas, Rochester)
 let mut default = HashMap::<String, String>::new();
 default.insert("engine".to_string(), "google".to_string());
 default.insert("api_key".to_string(), "your_secret_key".to_string());
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // initialize the search engine
 let mut parameter = HashMap::<String, String>::new();
@@ -186,7 +186,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "bing".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -236,7 +236,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "baidu".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -286,7 +286,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "yahoo".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -336,7 +336,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "youtube".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -386,7 +386,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "walmart".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -436,7 +436,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "ebay".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -486,7 +486,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "naver".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -536,7 +536,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "home_depot".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -586,7 +586,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "apple_app_store".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -636,7 +636,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "duckduckgo".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -686,7 +686,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -737,7 +737,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_scholar".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -787,7 +787,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_autocomplete".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -837,7 +837,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_product".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -888,7 +888,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_reverse_image".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -939,7 +939,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_events".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -989,7 +989,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_local_services".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -1040,7 +1040,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_maps".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -1092,7 +1092,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_jobs".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -1142,7 +1142,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_play".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();
@@ -1194,7 +1194,7 @@ let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
 default.insert("engine".to_string(), "google_images".to_string());
 // initialize the search engine
-let client = Client::new(default);
+let client = Client::new(default).unwrap();
 
 // let's search for coffee in Austin, TX
 let mut parameter = HashMap::new();

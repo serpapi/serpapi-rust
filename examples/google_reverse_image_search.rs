@@ -21,11 +21,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     default.insert("api_key".to_string(), api_key);
     default.insert("engine".to_string(), "google_reverse_image".to_string());
     // initialize the search engine
-    let client = Client::new(default);
+    let client = Client::new(default).unwrap();
 
     // let's search for coffee in Austin, TX
     let mut parameter = HashMap::new();
-    parameter.insert("image_url".to_string(), "https://i.imgur.com/5bGzZi7.jpg".to_string());
+    parameter.insert(
+        "image_url".to_string(),
+        "https://i.imgur.com/5bGzZi7.jpg".to_string(),
+    );
     parameter.insert("max_results".to_string(), "1".to_string());
     // copy search parameter for the html search
     let mut html_parameter = HashMap::new();
