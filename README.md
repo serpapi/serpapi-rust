@@ -10,7 +10,7 @@ A completed documentation is available at [SerpApi](https://serpapi.com).
 
 To install in your rust application, update Cargo.toml
 ```sh
-serpapi="1.0.0"
+serpapi="1.1.0"
 ```
 
 ## Usage
@@ -154,50 +154,16 @@ It returns your account information.
 - Asyncronous HTTP request handle method using tokio and reqwest
 - Async tests using Tokio
 
-## Benchmarks
-
-Performance benchmarks are available to measure runtime, memory usage, and CPU performance of search queries.
-
-### Running Benchmarks
-
-```bash
-export SERPAPI_KEY=your_api_key_here
-cargo bench --bench search_query
-```
-
-### Benchmark Results
-
-The benchmark executes the same search query ("coffee" in Austin, TX) 10 times and measures runtime, memory usage, and JSON parsing performance.
-
-#### Search Query Performance
-
-| Metric | Time (mean) | Time (std dev) | Iterations |
-|--------|-------------|----------------|------------|
-| search_with_parsing | 263.01 ms | 5.61 ms | 10 |
-
-*Detailed results available in `target/criterion/search_query/search_with_parsing/`*
-
-**Latest benchmark results:**
-
-**Runtime Performance:**
-- **Mean time:** 263.01 ms
-- **Standard deviation:** 5.61 ms
-- **95% Confidence interval:** 257.92 ms - 269.14 ms
-- **Samples collected:** 10
-
-**Memory Usage:**
-- **Memory Delta (mean):** 16.98 KB (0.02 MB)
-- **Memory Delta (std dev):** 264.29 KB (0.26 MB)
-- **Peak Memory:** 16.05 MB
-- **Memory samples:** 455
-
-> **Note:** Benchmark results are generated using [Criterion.rs](https://github.com/bheisler/criterion.rs). 
-> Open `target/criterion/search_query/search_with_parsing/report/index.html` in your browser to view detailed HTML reports with statistical analysis, plots, and comparisons.
-> 
-> The benchmark measures:
-> - Runtime performance of the search API call
-> - Memory usage during search operations
-> - CPU performance of JSON parsing and data access
+### Changes log
+- 1.1.0: Always reuse the same client object instead of creating a new one for each search.
+  - This is a breaking change for the API because the client must be unwrapped in the main function.
+    ```rust
+    # now: 1.1
+    let client = Client::new(default).unwrap();
+    # old: 1.0
+    let client = Client::new(default);
+    ```
+- 1.0.0: Initial release
 
 ### References
  * https://www.lpalmieri.com/posts/how-to-write-a-rest-client-in-rust-with-reqwest-and-wiremock/
@@ -224,6 +190,8 @@ The keyword google can be replaced by any supported search engine:
 - home_depot
 - apple_app_store
 - naver
+
+More example to come to match all search engines supported by [SerpApi.com.](https://serpapi.com/search-engine-apis)
 
 ### Search bing
 ```rust
