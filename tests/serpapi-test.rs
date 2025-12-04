@@ -65,10 +65,7 @@ async fn location() {
     let data = client.location(parameter).await.expect("request");
     let locations = data.as_array().unwrap();
     assert!(locations.len() > 3);
-    assert!(locations[0]["name"]
-        .as_str()
-        .unwrap()
-        .contains("Austin"));
+    assert!(locations[0]["name"].as_str().unwrap().contains("Austin"));
 }
 
 #[tokio::test]

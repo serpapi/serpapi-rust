@@ -11,9 +11,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ```bash
     // export API_key="paste_your_private_api_key"
     // ```
-    let api_key = match env::var_os("API_KEY") {
+    let api_key = match env::var_os("SERPAPI_KEY") {
         Some(v) => v.into_string().unwrap(),
-        None => panic!("$API_KEY environment variable is not set!"),
+        None => panic!("$SERPAPI_KEY environment variable is not set!"),
     };
 
     println!("let's initiliaze the client to search on google");
