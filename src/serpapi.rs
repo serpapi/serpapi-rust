@@ -67,11 +67,47 @@ impl Client {
         Ok(results)
     }
 
+    /// execute a search on serpapi.com
+    ///  and return the results as Markdown formatted as String.
+    ///  The Markdown output is optimized for LLMs and AI agents.
+    ///  It holds a YAML frontmatter followed by headings, links and tables
+    ///  using about half the tokens of the JSON output.
+    ///  see: https://serpapi.com/markdown-output
+    /// # Arguments
+    ///  * `parameter` search parameter, the output is always set to md.
+    ///
+    /// # Examples:
+    /// ```no_run
+    /// use std::collections::HashMap;
+    /// use serpapi::serpapi::Client;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///  let mut default = HashMap::<String, String>::new();
+    ///  default.insert("engine".to_string(), "google".to_string());
+    ///  default.insert("api_key".to_string(), "secret_api_key".to_string());
+    ///  // initialize the serpapi client
+    ///  let client = Client::new(default).unwrap();
+    ///  let mut parameter = HashMap::<String, String>::new();
+    ///  parameter.insert("q".to_string(), "coffee".to_string());
+    ///  // md returns the search results as a Markdown String.
+    ///  let markdown = client.md(parameter).await.expect("request");
+    ///  assert!(markdown.starts_with("---"));
+    /// }
+    /// ```
+    pub async fn md(
+        &self,
+        parameter: HashMap<String, String>,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let body = self.text("/search", force_output(parameter, "md")).await?;
+        Ok(body)
+    }
+
     // execute a search and return the result as raw HTML formatted as String
     /// # Arguments
-    /// * `parameter` html search parameter
+    /// * `parameter` html search parameter, the output is always set to html.
     /// # Examples:
-    /// ```
+    /// ```no_run
     /// use std::collections::HashMap;
     /// use serpapi::serpapi::Client;
     ///
@@ -93,7 +129,9 @@ impl Client {
         &self,
         parameter: HashMap<String, String>,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let body = self.get("/html", parameter).await?;
+        let body = self
+            .text("/search", force_output(parameter, "html"))
+            .await?;
         Ok(body)
     }
 
@@ -136,6 +174,21 @@ impl Client {
         Ok(results)
     }
 
+    /// Retrieve a search result from the Search Archive API as Markdown.
+    ///  see: https://serpapi.com/markdown-output
+    /// # Arguments
+    /// * `search_id` from the original search: `results["search_metadata"]["id"]`
+    pub async fn search_archive_md(
+        &self,
+        search_id: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let mut endpoint = "/searches/".to_string();
+        endpoint.push_str(search_id);
+        endpoint.push_str(".md");
+        let body = self.text(&endpoint, HashMap::new()).await?;
+        Ok(body)
+    }
+
     // Get account information using Account API
     pub async fn account(
         &self,
@@ -152,8 +205,27 @@ impl Client {
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let body = self.get(endpoint, parameter).await?;
         //debug: println!("Body:\n{}", body);
-        let value: serde_json::Value = serde_json::from_str(&body).unwrap();
+        //  a non JSON body means the output is html or md, see: Client::html and Client::md
+        let value: serde_json::Value = serde_json::from_str(&body)?;
         Ok(value)
+    }
+
+    /// execute a request and return the body as String.
+    ///  SerpApi reports errors as JSON even when html or md output is requested,
+    ///  so a JSON response to a text request is reported as an error.
+    /// # Arguments
+    /// * `endpoint` HTTP service URI
+    /// * `parameter` search parameter
+    pub async fn text(
+        &self,
+        endpoint: &str,
+        parameter: HashMap<String, String>,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let (content_type, body) = self.raw(endpoint, parameter).await?;
+        if content_type.starts_with("application/json") {
+            return Err(format!("search failed on {} with: {}", endpoint, body).into());
+        }
+        Ok(body)
     }
 
     pub async fn get(
@@ -161,6 +233,16 @@ impl Client {
         endpoint: &str,
         parameter: HashMap<String, String>,
     ) -> Result<String, Box<dyn std::error::Error>> {
+        let (_content_type, body) = self.raw(endpoint, parameter).await?;
+        Ok(body)
+    }
+
+    /// execute a request and return the content type along with the body.
+    async fn raw(
+        &self,
+        endpoint: &str,
+        parameter: HashMap<String, String>,
+    ) -> Result<(String, String), Box<dyn std::error::Error>> {
         let mut query = HashMap::<String, String>::new();
         query.insert("source".to_string(), "rust".to_string());
         for (key, value) in self.parameter.iter() {
@@ -175,7 +257,20 @@ impl Client {
         let mut url = HOST.to_string();
         url.push_str(endpoint);
         let res = self.http.get(url).query(&query).send().await?;
+        let content_type = res
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or("")
+            .to_lowercase();
         let body = res.text().await?;
-        Ok(body)
+        Ok((content_type, body))
     }
+}
+
+/// force the output format whatever the caller provides.
+///  the format drives the return type: json -> serde_json::Value, html / md -> String.
+fn force_output(mut parameter: HashMap<String, String>, format: &str) -> HashMap<String, String> {
+    parameter.insert("output".to_string(), format.to_string());
+    parameter
 }
