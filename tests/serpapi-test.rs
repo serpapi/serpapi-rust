@@ -57,6 +57,42 @@ async fn html() {
 }
 
 #[tokio::test]
+async fn markdown() {
+    let mut default = HashMap::<String, String>::new();
+    default.insert("engine".to_string(), "google".to_string());
+    default.insert("api_key".to_string(), api_key());
+
+    // initialize the search engine
+    let client = Client::new(default).unwrap();
+
+    let mut parameter = HashMap::<String, String>::new();
+    parameter.insert("q".to_string(), "coffee".to_string());
+    parameter.insert(
+        "location".to_string(),
+        "Austin, TX, Texas, United States".to_string(),
+    );
+    // md returns the search results as a Markdown String.
+    let markdown = client.md(parameter).await.expect("request");
+    // the Markdown output starts with a YAML frontmatter
+    assert!(markdown.starts_with("---"));
+    assert!(markdown.contains("coffee"));
+}
+
+#[tokio::test]
+async fn markdown_ignores_the_output_parameter() {
+    let mut default = HashMap::<String, String>::new();
+    default.insert("engine".to_string(), "google".to_string());
+    default.insert("api_key".to_string(), api_key());
+    let client = Client::new(default).unwrap();
+
+    let mut parameter = HashMap::<String, String>::new();
+    parameter.insert("q".to_string(), "coffee".to_string());
+    parameter.insert("output".to_string(), "json".to_string());
+    let markdown = client.md(parameter).await.expect("request");
+    assert!(markdown.starts_with("---"));
+}
+
+#[tokio::test]
 async fn location() {
     let default = HashMap::<String, String>::new();
     let client = Client::new(default).unwrap();
@@ -106,4 +142,24 @@ async fn search_archive() {
     let search_id = initial_results["search_metadata"]["id"].as_str();
     println!("{}", archived_results);
     assert_eq!(archive_id, search_id);
+}
+
+#[tokio::test]
+async fn search_archive_md() {
+    let mut default = HashMap::<String, String>::new();
+    default.insert("engine".to_string(), "google".to_string());
+    default.insert("api_key".to_string(), api_key());
+    let client = Client::new(default).unwrap();
+
+    let mut parameter = HashMap::<String, String>::new();
+    parameter.insert("q".to_string(), "coffee".to_string());
+    let initial_results = client.search(parameter).await.expect("request");
+    let id = initial_results["search_metadata"]["id"]
+        .as_str()
+        .expect("search id");
+
+    // search in archive as Markdown
+    let markdown = client.search_archive_md(id).await.expect("request");
+    assert!(markdown.starts_with("---"));
+    assert!(markdown.contains(id));
 }
