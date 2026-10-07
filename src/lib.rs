@@ -5,4 +5,7 @@
 //! SerpApi.com enables to do localized search, leverage advanced search engine features and a lot more...
 //! A completed documentation is available at [SerpApi](https://serpapi.com).
 //!
+//! Images can be uploaded with `upload_image` using the [Image API](https://serpapi.com/image-api)
+//! and searched with engines such as Google Lens.
+//!
 pub mod serpapi;
