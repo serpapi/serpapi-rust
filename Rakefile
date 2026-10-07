@@ -1,5 +1,5 @@
 
-task :default => [:fmt, :test, :doc, :readme, :oobt, :release]
+task :default => [:fmt, :test, :doc, :oobt, :release]
 
 task :fmt do 
   sh("cargo fmt")
@@ -11,10 +11,6 @@ end
 
 task :test do 
   sh("cargo test")
-end
-
-task readme: ['README.md.erb'] do
-  `erb -T '-' README.md.erb > README.md`
 end
 
 task :doc do 
@@ -38,4 +34,4 @@ task :publish do
   sh("cargo publish")
 end
 
-task :release => [:fmt, :test, :doc, :readme, :oobt, :publish]
+task :release => [:fmt, :test, :doc, :oobt, :publish]
