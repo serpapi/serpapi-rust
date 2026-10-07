@@ -97,6 +97,35 @@ impl Client {
         Ok(body)
     }
 
+    /// execute a search and return the result as Markdown formatted as String
+    /// # Arguments
+    /// * `parameter` markdown search parameter
+    /// # Examples:
+    /// ```
+    /// use std::collections::HashMap;
+    /// use serpapi::serpapi::Client;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    /// let mut default = HashMap::<String, String>::new();
+    /// default.insert("engine".to_string(), "google".to_string());
+    /// default.insert("api_key".to_string(), "secret_api_key".to_string());
+    /// // initialize the search engine
+    /// let client = Client::new(default).unwrap();
+    /// let mut parameter = HashMap::<String, String>::new();
+    /// parameter.insert("q".to_string(), "coffee".to_string());
+    /// let markdown = client.markdown(parameter).await.expect("request");
+    /// assert!(markdown.len() > 100);
+    /// }
+    /// ```
+    pub async fn markdown(
+        &self,
+        parameter: HashMap<String, String>,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let body = self.get("/markdown", parameter).await?;
+        Ok(body)
+    }
+
     /// Get location using Location API
     /// # Arguments
     /// * `parameter` html search parameter

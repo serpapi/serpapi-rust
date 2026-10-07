@@ -57,6 +57,20 @@ async fn html() {
 }
 
 #[tokio::test]
+async fn markdown() {
+    let mut default = HashMap::<String, String>::new();
+    default.insert("engine".to_string(), "google".to_string());
+    default.insert("api_key".to_string(), api_key());
+
+    let client = Client::new(default).unwrap();
+
+    let mut parameter = HashMap::<String, String>::new();
+    parameter.insert("q".to_string(), "coffee".to_string());
+    let markdown = client.markdown(parameter).await.expect("request");
+    assert!(markdown.len() > 100);
+}
+
+#[tokio::test]
 async fn location() {
     let default = HashMap::<String, String>::new();
     let client = Client::new(default).unwrap();
