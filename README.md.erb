@@ -149,6 +149,38 @@ let locations = data.as_array().unwrap();
 
 It returns the first 3 locations matching Austin (Texas, Texas, Rochester)
 
+### Image API
+
+Upload an image with the Image API, then use its `image_id` with a Search API engine
+supporting uploaded images such as [Google Lens](https://serpapi.com/google-lens-upload-an-image).
+Supported formats are jpg, jpeg, png and webp up to 500 KB. Uploaded image IDs expire after 10 minutes.
+
+```rust
+let mut default = HashMap::<String, String>::new();
+default.insert("api_key".to_string(), "your_secret_key".to_string());
+let client = Client::new(default).unwrap();
+
+// upload an image from a file path
+let upload = client.upload_image("./image.jpg", HashMap::new()).await?;
+let image_id = upload["image_id"].as_str().expect("image id");
+
+// search with google lens using the uploaded image
+let mut parameter = HashMap::<String, String>::new();
+parameter.insert("engine".to_string(), "google_lens".to_string());
+parameter.insert("image_id".to_string(), image_id.to_string());
+let results = client.search(parameter).await?;
+let visual_matches = results["visual_matches"].as_array().unwrap();
+```
+
+An in-memory image can be uploaded with `upload_image_bytes`:
+
+```rust
+let upload = client.upload_image_bytes(image_bytes, "image.png", HashMap::new()).await?;
+```
+
+`upload_image` returns an error when the image is rejected by the API, for instance because of an unsupported format.
+
+[See Image API documentation](https://serpapi.com/image-api) · [See Google Lens image upload documentation](https://serpapi.com/google-lens-upload-an-image)
 
 ### Search Archive API
 
@@ -199,12 +231,15 @@ It returns your account information.
 
 ### Technical features
 - Search results as JSON with `search`, Markdown with `md`, or raw search engine HTML with `html`
+- Image upload for Google Lens and other engines with `upload_image`
 - Dynamic JSON decoding using Serde JSON
 - Asyncronous HTTP request handle method using tokio and reqwest
 - Async tests using Tokio
 
 ### Changes log
 - Unreleased:
+  - Add Image API support with `client.upload_image(path, parameter)` and `client.upload_image_bytes(bytes, file_name, parameter)`.
+  - Requests are sent over https directly instead of following the http redirect.
   - Add Markdown output for LLMs and AI agents with `client.md(parameter)` and `client.search_archive_md(&id)`.
   - `client.html(parameter)` now calls the search endpoint with `output=html` which returns the raw search engine HTML.
 - 1.1.0: Always reuse the same client object instead of creating a new one for each search.
@@ -328,6 +363,10 @@ see: [https://serpapi.com/google-play-api](https://serpapi.com/google-play-api)
 ### Search google images
 <%= snippet('rust', 'examples/google_images_search.rs') %>
 see: [https://serpapi.com/images-results](https://serpapi.com/images-results)
+
+### Search google lens with an uploaded image
+<%= snippet('rust', 'examples/google_lens_upload_image.rs') %>
+see: [https://serpapi.com/google-lens-upload-an-image](https://serpapi.com/google-lens-upload-an-image)
 
 ## License
 

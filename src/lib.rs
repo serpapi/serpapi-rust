@@ -7,5 +7,7 @@
 //!
 //! Search results are available as JSON with `search`, as [Markdown](https://serpapi.com/markdown-output)
 //! optimized for LLMs and AI agents with `md`, or as raw search engine HTML with `html`.
+//! Images can be uploaded with `upload_image` using the [Image API](https://serpapi.com/image-api)
+//! and searched with engines such as Google Lens.
 //!
 pub mod serpapi;

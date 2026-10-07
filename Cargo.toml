@@ -25,8 +25,8 @@ include = [
 serde_json = "1.0"
 # Asynchronous runtime
 tokio = { version = "1", features = ["full"] }
-# HTTP client
-reqwest = "0.11.7"
+# HTTP client, multipart is required by the Image API upload
+reqwest = { version = "0.11.7", features = ["multipart"] }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }

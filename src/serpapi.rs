@@ -4,6 +4,7 @@
 //! Client wraps a custom HTTP client designed for SerpApi.com
 //!
 use std::collections::HashMap;
+use std::path::Path;
 
 // model serpapi client
 //  because of Rust designed we propose to create a new search everytime
@@ -17,7 +18,9 @@ pub struct Client {
     pub http: reqwest::Client,
 }
 
-const HOST: &str = "http://serpapi.com";
+// https is required: a plain http request is redirected with a 301
+//  which turns the Image API multipart POST into a GET.
+const HOST: &str = "https://serpapi.com";
 
 impl Client {
     /// initialize a serp api client with default parameters.
@@ -161,6 +164,72 @@ impl Client {
         Ok(results)
     }
 
+    /// Upload an image using the Image API.
+    ///  The returned `image_id` can be supplied to Search API engines
+    ///  supporting uploaded images, such as Google Lens.
+    ///  Supported formats: jpg, jpeg, png and webp up to 500 KB.
+    ///  The `image_id` expires after 10 minutes.
+    ///  see: https://serpapi.com/image-api
+    /// # Arguments
+    /// * `path` image file path
+    /// * `parameter` request parameter, such as an `api_key` overriding the client default
+    /// # Examples
+    /// ```no_run
+    /// use std::collections::HashMap;
+    /// use serpapi::serpapi::Client;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///  let mut default = HashMap::<String, String>::new();
+    ///  default.insert("api_key".to_string(), "secret_api_key".to_string());
+    ///  let client = Client::new(default).unwrap();
+    ///  let upload = client.upload_image("./image.jpg", HashMap::new()).await.expect("upload");
+    ///  let image_id = upload["image_id"].as_str().expect("image id");
+    ///  // search with google lens using the uploaded image
+    ///  let mut parameter = HashMap::<String, String>::new();
+    ///  parameter.insert("engine".to_string(), "google_lens".to_string());
+    ///  parameter.insert("image_id".to_string(), image_id.to_string());
+    ///  let results = client.search(parameter).await.expect("request");
+    ///  // let visual_matches = results["visual_matches"].as_array().unwrap();
+    /// }
+    /// ```
+    pub async fn upload_image<P: AsRef<Path>>(
+        &self,
+        path: P,
+        parameter: HashMap<String, String>,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let path = path.as_ref();
+        let file_name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("image");
+        let image = tokio::fs::read(path).await?;
+        self.upload_image_bytes(image, file_name, parameter).await
+    }
+
+    /// Upload an in-memory image using the Image API.
+    ///  see: Client::upload_image
+    /// # Arguments
+    /// * `image` binary content of the image
+    /// * `file_name` file name including the extension, such as "image.png"
+    /// * `parameter` request parameter, such as an `api_key` overriding the client default
+    pub async fn upload_image_bytes(
+        &self,
+        image: Vec<u8>,
+        file_name: &str,
+        parameter: HashMap<String, String>,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let part = reqwest::multipart::Part::bytes(image)
+            .file_name(file_name.to_string())
+            .mime_str(image_mime_type(file_name))?;
+        let form = reqwest::multipart::Form::new().part("image", part);
+        let results = self.post_multipart("/image", parameter, form).await?;
+        if let Some(error) = results["error"].as_str() {
+            return Err(format!("image upload failed with: {}", error).into());
+        }
+        Ok(results)
+    }
+
     // Retrieve search result from the Search Archive API
     pub async fn search_archive(
         &self,
@@ -243,17 +312,7 @@ impl Client {
         endpoint: &str,
         parameter: HashMap<String, String>,
     ) -> Result<(String, String), Box<dyn std::error::Error>> {
-        let mut query = HashMap::<String, String>::new();
-        query.insert("source".to_string(), "rust".to_string());
-        for (key, value) in self.parameter.iter() {
-            if !parameter.contains_key(key) {
-                query.insert(key.to_string(), value.to_string());
-            }
-        }
-        for (key, value) in parameter.iter() {
-            query.insert(key.to_string(), value.to_string());
-        }
-
+        let query = self.query(parameter);
         let mut url = HOST.to_string();
         url.push_str(endpoint);
         let res = self.http.get(url).query(&query).send().await?;
@@ -266,6 +325,41 @@ impl Client {
         let body = res.text().await?;
         Ok((content_type, body))
     }
+
+    /// execute a multipart/form-data POST request and decode the JSON response.
+    ///  the request parameters are sent as form fields alongside the given form parts.
+    async fn post_multipart(
+        &self,
+        endpoint: &str,
+        parameter: HashMap<String, String>,
+        mut form: reqwest::multipart::Form,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        for (key, value) in self.query(parameter) {
+            form = form.text(key, value);
+        }
+        let mut url = HOST.to_string();
+        url.push_str(endpoint);
+        let res = self.http.post(url).multipart(form).send().await?;
+        let body = res.text().await?;
+        let value: serde_json::Value = serde_json::from_str(&body)?;
+        Ok(value)
+    }
+
+    /// merge the client default parameter with the request parameter.
+    ///  the request parameter takes precedence over the client default.
+    fn query(&self, parameter: HashMap<String, String>) -> HashMap<String, String> {
+        let mut query = HashMap::<String, String>::new();
+        query.insert("source".to_string(), "rust".to_string());
+        for (key, value) in self.parameter.iter() {
+            if !parameter.contains_key(key) {
+                query.insert(key.to_string(), value.to_string());
+            }
+        }
+        for (key, value) in parameter.iter() {
+            query.insert(key.to_string(), value.to_string());
+        }
+        query
+    }
 }
 
 /// force the output format whatever the caller provides.
@@ -273,4 +367,19 @@ impl Client {
 fn force_output(mut parameter: HashMap<String, String>, format: &str) -> HashMap<String, String> {
     parameter.insert("output".to_string(), format.to_string());
     parameter
+}
+
+/// guess the image MIME type from the file extension.
+///  the Image API supports jpg, jpeg, png and webp.
+fn image_mime_type(file_name: &str) -> &'static str {
+    let extension = Path::new(file_name)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.to_lowercase());
+    match extension.as_deref() {
+        Some("jpg") | Some("jpeg") => "image/jpeg",
+        Some("png") => "image/png",
+        Some("webp") => "image/webp",
+        _ => "application/octet-stream",
+    }
 }
