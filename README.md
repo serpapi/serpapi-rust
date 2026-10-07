@@ -87,6 +87,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 [Google search documentation](https://serpapi.com/search-api).
 More hands on examples are available below.
 
+### Response formats
+
+Use `search` for structured results decoded into a `serde_json::Value`:
+
+```rust
+let results = client.search(parameter).await?;
+```
+
+Use `md` for a token-efficient Markdown `String` optimized for LLMs and AI agents.
+It returns clean headings, links and tables behind a YAML frontmatter while using
+roughly half the tokens of the JSON output:
+
+```rust
+let markdown = client.md(parameter).await?;
+```
+
+Use `html` when you need the raw response from the search engine:
+
+```rust
+let raw_html = client.html(parameter).await?;
+```
+
+`md` and `html` always force the output format, so any `output` search parameter is ignored.
+Archived results are also available as Markdown with `client.search_archive_md(&id).await?`.
+
+Learn more about [SerpApi Markdown output](https://serpapi.com/markdown-output).
+
 #### Documentations
 
  * [Full documentation on SerpApi.com](https://serpapi.com)
@@ -107,6 +134,38 @@ let locations = data.as_array().unwrap();
 
 It returns the first 3 locations matching Austin (Texas, Texas, Rochester)
 
+### Image API
+
+Upload an image with the Image API, then use its `image_id` with a Search API engine
+supporting uploaded images such as [Google Lens](https://serpapi.com/google-lens-upload-an-image).
+Supported formats are jpg, jpeg, png and webp up to 500 KB. Uploaded image IDs expire after 10 minutes.
+
+```rust
+let mut default = HashMap::<String, String>::new();
+default.insert("api_key".to_string(), "your_secret_key".to_string());
+let client = Client::new(default).unwrap();
+
+// upload an image from a file path
+let upload = client.upload_image("./image.jpg", HashMap::new()).await?;
+let image_id = upload["image_id"].as_str().expect("image id");
+
+// search with google lens using the uploaded image
+let mut parameter = HashMap::<String, String>::new();
+parameter.insert("engine".to_string(), "google_lens".to_string());
+parameter.insert("image_id".to_string(), image_id.to_string());
+let results = client.search(parameter).await?;
+let visual_matches = results["visual_matches"].as_array().unwrap();
+```
+
+An in-memory image can be uploaded with `upload_image_bytes`:
+
+```rust
+let upload = client.upload_image_bytes(image_bytes, "image.png", HashMap::new()).await?;
+```
+
+`upload_image` returns an error when the image is rejected by the API, for instance because of an unsupported format.
+
+[See Image API documentation](https://serpapi.com/image-api) · [See Google Lens image upload documentation](https://serpapi.com/google-lens-upload-an-image)
 
 ### Search Archive API
 
@@ -139,6 +198,12 @@ println!("{}", archived_results);
 assert_eq!(archive_id, search_id);
 ```
 
+The same archived search is available as Markdown:
+
+```rust
+let markdown = client.search_archive_md(&id).await.expect("request");
+```
+
 ### Account API
 ```rust
 let client = Client::new(HashMap::<String, String>::new());
@@ -150,11 +215,18 @@ let account = client.account(parameter).await.expect("request");
 It returns your account information.
 
 ### Technical features
+- Search results as JSON with `search`, Markdown with `md`, or raw search engine HTML with `html`
+- Image upload for Google Lens and other engines with `upload_image`
 - Dynamic JSON decoding using Serde JSON
 - Asyncronous HTTP request handle method using tokio and reqwest
 - Async tests using Tokio
 
 ### Changes log
+- Unreleased:
+  - Add Image API support with `client.upload_image(path, parameter)` and `client.upload_image_bytes(bytes, file_name, parameter)`.
+  - Requests are sent over https directly instead of following the http redirect.
+  - Add Markdown output for LLMs and AI agents with `client.md(parameter)` and `client.search_archive_md(&id)`.
+  - `client.html(parameter)` now calls the search endpoint with `output=html` which returns the raw search engine HTML.
 - 1.1.0: Always reuse the same client object instead of creating a new one for each search.
   - This is a breaking change for the API because the client must be unwrapped in the main function.
     ```rust
@@ -1258,6 +1330,68 @@ Ok(())
 
  * source code: [examples/google_images_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_images_search.rs)
 see: [https://serpapi.com/images-results](https://serpapi.com/images-results)
+
+### Search google lens with an uploaded image
+```rust
+let mut default = HashMap::new();
+default.insert("api_key".to_string(), "your_secret_api_key".to_string());
+default.insert("engine".to_string(), "google_lens".to_string());
+// initialize the search engine
+let client = Client::new(default).unwrap();
+
+// upload the image given on the command line,
+//  or download a sample image when no path is provided:
+//  cargo run --example google_lens_upload_image -- ./image.jpg
+println!("uploading...");
+let upload = match env::args().nth(1) {
+    Some(path) => client.upload_image(&path, HashMap::new()).await?,
+    None => {
+        let image = reqwest::get("https://i.imgur.com/5bGzZi7.jpg")
+            .await?
+            .bytes()
+            .await?
+            .to_vec();
+        client
+            .upload_image_bytes(image, "image.jpg", HashMap::new())
+            .await?
+    }
+};
+let image_id = upload["image_id"].as_str().unwrap();
+println!(" - image uploaded with id: {}", image_id);
+
+// let's search with google lens using the uploaded image
+let mut parameter = HashMap::new();
+parameter.insert("image_id".to_string(), image_id.to_string());
+
+// search returns a JSON as serde_json::Value which can be accessed like a HashMap.
+println!("waiting...");
+let results = client.search(parameter).await?;
+println!("results received");
+println!("--- JSON ---");
+let status = &results["search_metadata"]["status"];
+if status != "Success" {
+    println!("search failed with status: {}", status);
+} else {
+    println!("search is successfull");
+    let visual_matches = results["visual_matches"].as_array().unwrap();
+    println!(" - number of visual_matches: {}", visual_matches.len());
+    println!(
+        " - visual_matches first result description: {}",
+        results["visual_matches"][0]
+    );
+    println!(
+        " - async search completed with {}\n",
+        results["search_parameters"]["engine"]
+    );
+}
+
+print!("ok");
+Ok(())
+
+```
+
+ * source code: [examples/google_lens_upload_image.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_lens_upload_image.rs)
+see: [https://serpapi.com/google-lens-upload-an-image](https://serpapi.com/google-lens-upload-an-image)
 
 ## License
 
