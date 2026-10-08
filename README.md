@@ -1172,69 +1172,6 @@ Ok(())
  * source code: [examples/google_reverse_image_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_reverse_image_search.rs)
 see: [https://serpapi.com/google-reverse-image](https://serpapi.com/google-reverse-image)
 
-### Search google events
-```rust
-let mut default = HashMap::new();
-default.insert("api_key".to_string(), "your_secret_api_key".to_string());
-default.insert("engine".to_string(), "google_events".to_string());
-// initialize the search engine
-let client = Client::new(default).unwrap();
-
-// let's search for coffee in Austin, TX
-let mut parameter = HashMap::new();
-parameter.insert("q".to_string(), "coffee".to_string());
-// copy search parameter for the html search
-let mut html_parameter = HashMap::new();
-html_parameter.clone_from(&parameter);
-
-// search returns a JSON as serde_json::Value which can be accessed like a HashMap.
-println!("waiting...");
-let results = client.search(parameter).await?;
-let events_results = results["events_results"].as_array().unwrap();
-println!("results received");
-println!("--- JSON ---");
-let status = &results["search_metadata"]["status"];
-if status != "Success" {
-    println!("search failed with status: {}", status);
-} else {
-    println!("search is successfull");
-
-    println!(" - number of events_results: {}", events_results.len());
-    println!(
-        " - events_results first result description: {}",
-        results["events_results"][0]
-    );
-
-    // pagination: fetch up to 2 more pages
-    println!("--- Pagination ---");
-    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
-    for page in 2..=3 {
-        let Some(url) = next else { break };
-        let page_parameter: HashMap<String, String> =
-            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
-        let page_results = client.search(page_parameter).await?;
-        let count = page_results["events_results"].as_array().map_or(0, |r| r.len());
-        println!(" - page {}: {} events_results", page, count);
-        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
-    }
-
-    // search returns text
-    println!("--- HTML search ---");
-    println!(" - raw HTML size {} bytes\n", raw.len());
-    println!(
-        " - async search completed with {}\n",
-        results["search_parameters"]["engine"]
-    );
-}
-
-print!("ok");
-Ok(())
-
-```
-
- * source code: [examples/google_events_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_events_search.rs)
-see: [https://serpapi.com/google-events-api](https://serpapi.com/google-events-api)
-
 ### Search google local services
 ```rust
 let mut default = HashMap::new();
