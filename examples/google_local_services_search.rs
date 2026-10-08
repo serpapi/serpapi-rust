@@ -49,6 +49,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             results["local_ads"][0]
         );
 
+        // pagination: fetch up to 2 more pages
+        println!("--- Pagination ---");
+        let mut next = results["serpapi_pagination"]["next"]
+            .as_str()
+            .map(String::from);
+        for page in 2..=3 {
+            let Some(url) = next else { break };
+            let page_parameter: HashMap<String, String> = reqwest::Url::parse(&url)?
+                .query_pairs()
+                .into_owned()
+                .collect();
+            let page_results = client.search(page_parameter).await?;
+            let count = page_results["local_ads"].as_array().map_or(0, |r| r.len());
+            println!(" - page {}: {} local_ads", page, count);
+            next = page_results["serpapi_pagination"]["next"]
+                .as_str()
+                .map(String::from);
+        }
+
         // search returns text
         println!("--- HTML search ---");
         let raw = client.html(html_parameter).await.expect("html content");

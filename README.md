@@ -69,6 +69,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             results["organic_results"][0]
         );
 
+        // pagination: fetch up to 2 more pages
+        println!("--- Pagination ---");
+        let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+        for page in 2..=3 {
+            let Some(url) = next else { break };
+            let page_parameter: HashMap<String, String> =
+                reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+            let page_results = client.search(page_parameter).await?;
+            let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+            println!(" - page {}: {} organic_results", page, count);
+            next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+        }
+
         // search returns text
         println!("--- HTML search ---");
         let raw = client.html(html_parameter).await.expect("html content");
@@ -241,6 +254,19 @@ if status != "Success" {
         results["organic_results"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -290,6 +316,19 @@ if status != "Success" {
         " - organic_results first result description: {}",
         results["organic_results"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -341,6 +380,19 @@ if status != "Success" {
         results["organic_results"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -390,6 +442,19 @@ if status != "Success" {
         " - video_results first result description: {}",
         results["video_results"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["video_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} video_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -441,6 +506,19 @@ if status != "Success" {
         results["organic_results"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -490,6 +568,19 @@ if status != "Success" {
         " - organic_results first result description: {}",
         results["organic_results"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -541,6 +632,19 @@ if status != "Success" {
         results["ads_results"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["ads_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} ads_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -590,6 +694,19 @@ if status != "Success" {
         " - products first result description: {}",
         results["products"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["products"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} products", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -641,6 +758,19 @@ if status != "Success" {
         results["organic_results"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -690,6 +820,19 @@ if status != "Success" {
         " - organic_results first result description: {}",
         results["organic_results"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -742,6 +885,19 @@ if status != "Success" {
         results["organic_results"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -791,6 +947,19 @@ if status != "Success" {
         " - organic_results first result description: {}",
         results["organic_results"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -842,6 +1011,19 @@ if status != "Success" {
         results["suggestions"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["suggestions"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} suggestions", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -892,6 +1074,19 @@ if status != "Success" {
         " - product_results first result description: {}",
         results["product_results"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["product_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} product_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -947,6 +1142,19 @@ if status != "Success" {
         results["image_sizes"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["image_sizes"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} image_sizes", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -996,6 +1204,19 @@ if status != "Success" {
         " - events_results first result description: {}",
         results["events_results"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["events_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} events_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -1047,6 +1268,19 @@ if status != "Success" {
         " - local_ads first result description: {}",
         results["local_ads"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["local_ads"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} local_ads", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -1103,6 +1337,19 @@ if status != "Success" {
         results["local_results"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["local_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} local_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -1152,6 +1399,19 @@ if status != "Success" {
         " - jobs_results first result description: {}",
         results["jobs_results"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["jobs_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} jobs_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
@@ -1205,6 +1465,19 @@ if status != "Success" {
         results["organic_results"][0]
     );
 
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["organic_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} organic_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
+
     // search returns text
     println!("--- HTML search ---");
     println!(" - raw HTML size {} bytes\n", raw.len());
@@ -1256,6 +1529,19 @@ if status != "Success" {
         " - images_results first result description: {}",
         results["images_results"][0]
     );
+
+    // pagination: fetch up to 2 more pages
+    println!("--- Pagination ---");
+    let mut next = results["serpapi_pagination"]["next"].as_str().map(String::from);
+    for page in 2..=3 {
+        let Some(url) = next else { break };
+        let page_parameter: HashMap<String, String> =
+            reqwest::Url::parse(&url)?.query_pairs().into_owned().collect();
+        let page_results = client.search(page_parameter).await?;
+        let count = page_results["images_results"].as_array().map_or(0, |r| r.len());
+        println!(" - page {}: {} images_results", page, count);
+        next = page_results["serpapi_pagination"]["next"].as_str().map(String::from);
+    }
 
     // search returns text
     println!("--- HTML search ---");
