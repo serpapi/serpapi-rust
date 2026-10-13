@@ -145,7 +145,7 @@ default.insert("api_key".to_string(), "your_secret_key".to_string());
 let client = Client::new(default).unwrap();
 let mut parameter = HashMap::<String, String>::new();
 parameter.insert("q".to_string(), "coffee".to_string());
-let markdown = client.markdown(parameter).await.expect("request");
+let markdown = client.md(parameter).await.expect("request");
 ```
 
 It returns the search results formatted as Markdown.
@@ -217,7 +217,7 @@ It returns your account information.
 - Async tests using Tokio
 
 ### Change log
-- 1.2.1: Fix bug in `markdown()`, fix `client.md(parameter)` and `client.search_archive_md(&id)` method to return search results formatted as Markdown.
+- 1.2.1: Remove `markdown()` which called a non-existent endpoint, use `client.md(parameter)` and `client.search_archive_md(&id)` to return search results formatted as Markdown.
 - 1.2.0: Add `markdown` method to return search results formatted as Markdown.
 - 1.1.0: Always reuse the same client object instead of creating a new one for each search.
   - This is a breaking change for the API because the client must be unwrapped in the main function.

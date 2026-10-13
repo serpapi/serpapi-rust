@@ -93,7 +93,7 @@ async fn markdown_ignores_the_output_parameter() {
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("q".to_string(), "coffee".to_string());
     parameter.insert("output".to_string(), "json".to_string());
-    let markdown = client.markdown(parameter).await.expect("request");
+    let markdown = client.md(parameter).await.expect("request");
     assert!(markdown.starts_with("---\nsearch_metadata:"));
 }
 
