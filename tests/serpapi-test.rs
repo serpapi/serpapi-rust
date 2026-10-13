@@ -30,6 +30,8 @@ async fn search() {
 
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     let results = client.search(parameter).await.expect("request");
+    assert_eq!(results["search_metadata"]["status"], "Success");
+    assert_eq!(results["search_parameters"]["q"], "coffee");
     let organic_results = results["organic_results"].as_array().unwrap();
     assert!(organic_results.len() > 1);
 
@@ -53,7 +55,9 @@ async fn html() {
         "Austin, TX, Texas, United States".to_string(),
     );
     let html = client.html(parameter).await.expect("request");
-    assert!(html.len() > 100);
+    assert!(html.contains("<html"));
+    assert!(html.contains("</html>"));
+    assert!(html.contains("coffee"));
 }
 
 #[tokio::test]
@@ -74,8 +78,9 @@ async fn markdown() {
     // md returns the search results as a Markdown String.
     let markdown = client.md(parameter).await.expect("request");
     // the Markdown output starts with a YAML frontmatter
-    assert!(markdown.starts_with("---"));
-    assert!(markdown.contains("coffee"));
+    assert!(markdown.starts_with("---\nsearch_metadata:"));
+    assert!(markdown.contains("status: Success"));
+    assert!(markdown.contains("q: coffee"));
 }
 
 #[tokio::test]
@@ -89,7 +94,7 @@ async fn markdown_ignores_the_output_parameter() {
     parameter.insert("q".to_string(), "coffee".to_string());
     parameter.insert("output".to_string(), "json".to_string());
     let markdown = client.markdown(parameter).await.expect("request");
-    assert!(markdown.starts_with("---"));
+    assert!(markdown.starts_with("---\nsearch_metadata:"));
 }
 
 #[tokio::test]
@@ -154,6 +159,6 @@ async fn search_archive_md() {
 
     // search in archive as Markdown
     let markdown = client.search_archive_md(id).await.expect("request");
-    assert!(markdown.starts_with("---"));
+    assert!(markdown.starts_with("---\nsearch_metadata:"));
     assert!(markdown.contains(id));
 }
