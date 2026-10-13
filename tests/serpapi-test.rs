@@ -129,19 +129,13 @@ async fn search_archive() {
         "Austin, TX, Texas, United States".to_string(),
     );
     let initial_results = client.search(parameter).await.expect("request");
-    let mut id = initial_results["search_metadata"]["id"].to_string();
-    // remove extra quote " from string convertion
-    id = id.replace("\"", "");
-
-    println!("{}", initial_results["search_metadata"]);
-    assert_ne!(id, "");
+    let id = initial_results["search_metadata"]["id"]
+        .as_str()
+        .expect("search id");
 
     // search in archive
-    let archived_results = client.search_archive(&id).await.expect("request");
-    let archive_id = archived_results["search_metadata"]["id"].as_str();
-    let search_id = initial_results["search_metadata"]["id"].as_str();
-    println!("{}", archived_results);
-    assert_eq!(archive_id, search_id);
+    let archived_results = client.search_archive(id).await.expect("request");
+    assert_eq!(archived_results["search_metadata"]["id"].as_str(), Some(id));
 }
 
 #[tokio::test]

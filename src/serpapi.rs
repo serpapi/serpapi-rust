@@ -44,7 +44,7 @@ impl Client {
     /// async fn main() {
     ///  let mut default = std::collections::HashMap::<String, String>::new();
     ///  default.insert("engine".to_string(), "google".to_string());
-    ///  default.insert("api_key".to_string(), "secret_api_key".to_string());
+    ///  default.insert("api_key".to_string(), std::env::var("SERPAPI_KEY").expect("$SERPAPI_KEY is not set"));
     ///  // initialize the serpapi client
     ///  let client = Client::new(default).unwrap();
     ///  let mut parameter = HashMap::<String, String>::new();
@@ -265,6 +265,7 @@ impl Client {
         let mut url = HOST.to_string();
         url.push_str(endpoint);
         let res = self.http.get(url).query(&query).send().await?;
+        let status = res.status();
         let content_type = res
             .headers()
             .get(reqwest::header::CONTENT_TYPE)
@@ -272,6 +273,9 @@ impl Client {
             .unwrap_or("")
             .to_lowercase();
         let body = res.text().await?;
+        if !status.is_success() {
+            return Err(format!("{} failed with HTTP {}: {}", endpoint, status, body).into());
+        }
         Ok((content_type, body))
     }
 }

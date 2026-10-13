@@ -216,11 +216,8 @@ It returns your account information.
 - Async tests using Tokio
 
 ### Changes log
-- Unreleased:
-  - Add Markdown output for LLMs and AI agents with `client.md(parameter)` and `client.search_archive_md(&id)`.
-  - Fix `client.markdown(parameter)` which called a non-existent `/markdown` endpoint; it is now an alias of `client.md`.
-  - `client.html(parameter)` now calls the search endpoint with `output=html` which returns the raw search engine HTML.
-- 1.2.0: Add `markdown` method to return search results formatted as Markdown.
+- 1.2.1: Fix bug in `markdown()`, fix `client.md(parameter)` and `client.search_archive_md(&id)` method to return search results formatted as Markdown.
+- 1.2.0: Add `markdown` method to return search results formatted as Markdown. 
 - 1.1.0: Always reuse the same client object instead of creating a new one for each search.
   - This is a breaking change for the API because the client must be unwrapped in the main function.
     ```rust
