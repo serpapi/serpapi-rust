@@ -11,7 +11,7 @@ Integrate search data into your AI workflow, RAG, fine-tuning, or Rust applicati
 To install in your Rust application, update Cargo.toml:
 
 ```sh
-serpapi="1.2.0"
+serpapi="1.2.1"
 ```
 
 ## Quick start
@@ -102,6 +102,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 More examples are available below.
 
+### Response formats
+
+Use `search` for structured results decoded into a `serde_json::Value`:
+
+```rust
+let results = client.search(parameter).await?;
+```
+
+Use `md` for a token-efficient Markdown `String` optimized for LLMs and AI agents.
+It returns clean headings, links and tables behind a YAML frontmatter while using
+roughly half the tokens of the JSON output:
+
+```rust
+let markdown = client.md(parameter).await?;
+```
+
+Use `html` when you need the raw response from the search engine:
+
+```rust
+let raw_html = client.html(parameter).await?;
+```
+
+`md` and `html` always force the output format, so any `output` search parameter is ignored.
+Archived results are also available as Markdown with `client.search_archive_md(&id).await?`.
+
+Learn more about [SerpApi Markdown output](https://serpapi.com/markdown-output).
+
 #### Documentation
 
  * [Full documentation on SerpApi.com](https://serpapi.com)
@@ -118,7 +145,7 @@ default.insert("api_key".to_string(), "your_secret_key".to_string());
 let client = Client::new(default).unwrap();
 let mut parameter = HashMap::<String, String>::new();
 parameter.insert("q".to_string(), "coffee".to_string());
-let markdown = client.markdown(parameter).await.expect("request");
+let markdown = client.md(parameter).await.expect("request");
 ```
 
 It returns the search results formatted as Markdown.
@@ -167,6 +194,12 @@ println!("{}", archived_results);
 assert_eq!(archive_id, search_id);
 ```
 
+The same archived search is available as Markdown:
+
+```rust
+let markdown = client.search_archive_md(&id).await.expect("request");
+```
+
 ### Account API
 ```rust
 let client = Client::new(HashMap::<String, String>::new());
@@ -178,11 +211,13 @@ let account = client.account(parameter).await.expect("request");
 It returns your account information.
 
 ### Technical features
+- Search results as JSON with `search`, Markdown with `md`, or raw search engine HTML with `html`
 - Dynamic JSON decoding using Serde JSON
 - Asyncronous HTTP request handle method using tokio and reqwest
 - Async tests using Tokio
 
 ### Change log
+- 1.2.1: Remove `markdown()` which called a non-existent endpoint, use `client.md(parameter)` and `client.search_archive_md(&id)` to return search results formatted as Markdown.
 - 1.2.0: Add `markdown` method to return search results formatted as Markdown.
 - 1.1.0: Always reuse the same client object instead of creating a new one for each search.
   - This is a breaking change for the API because the client must be unwrapped in the main function.
