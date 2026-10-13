@@ -1,19 +1,20 @@
 
-# SerpApi Search in Rust
+# SerpApi for Rust
 [![serpapi-rust](https://github.com/serpapi/serpapi-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/serpapi/serpapi-rust/actions/workflows/ci.yml) [![serpapi-rust](https://img.shields.io/crates/v/serpapi.svg)](https://crates.io/crates/serpapi)
 
-This Rust package enables to scrape and parse search results from Google, Bing, Baidu, Yandex, Yahoo, Ebay, Apple, Youtube, Naver, Home depot and more. It's powered by [SerpApi](https://serpapi.com) which delivered a consistent JSON format accross search engines.
-SerpApi.com enables to do localized search, leverage advanced search engine features and a lot more...
-A completed documentation is available at [SerpApi](https://serpapi.com).
+Integrate search data into your AI workflow, RAG, fine-tuning, or Rust application using this official [SerpApi Rust SDK](https://serpapi.com/integrations/rust).
+
+[SerpApi](https://serpapi.com/) supports Google, Google Maps, Google Shopping, Baidu, Yandex, Yahoo, eBay, App Stores, and many more.
 
 ## Installation
 
-To install in your rust application, update Cargo.toml
+To install in your Rust application, update Cargo.toml:
+
 ```sh
-serpapi="1.2.0"
+serpapi="1.2.1"
 ```
 
-## Usage
+## Quick start
 
 Let's start by searching for Coffee on Google:
 
@@ -97,15 +98,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-[Google search documentation](https://serpapi.com/search-api).
-More hands on examples are available below.
+[Google search documentation](https://serpapi.com/search-api)
 
-#### Documentations
+More examples are available below.
+
+### Response formats
+
+Use `search` for structured results decoded into a `serde_json::Value`:
+
+```rust
+let results = client.search(parameter).await?;
+```
+
+Use `md` for a token-efficient Markdown `String` optimized for LLMs and AI agents.
+It returns clean headings, links and tables behind a YAML frontmatter while using
+roughly half the tokens of the JSON output:
+
+```rust
+let markdown = client.md(parameter).await?;
+```
+
+Use `html` when you need the raw response from the search engine:
+
+```rust
+let raw_html = client.html(parameter).await?;
+```
+
+`md` and `html` always force the output format, so any `output` search parameter is ignored.
+Archived results are also available as Markdown with `client.search_archive_md(&id).await?`.
+
+Learn more about [SerpApi Markdown output](https://serpapi.com/markdown-output).
+
+#### Documentation
 
  * [Full documentation on SerpApi.com](https://serpapi.com)
  * [API health status](https://serpapi.com/status)
 
-For more information how to build a paramaters HashMap see [serpapi.com documentation](https://serpapi.com/search-api)
+For more information how to build a paramaters HashMap, see [serpapi.com documentation](https://serpapi.com/search-api).
 
 ### Markdown search
 
@@ -132,7 +161,7 @@ let data = client.location(parameter).await.expect("request");
 let locations = data.as_array().unwrap();
 ```
 
-It returns the first 3 locations matching Austin (Texas, Texas, Rochester)
+It returns the first 3 locations matching Austin (Texas, Texas, Rochester).
 
 ### Image API
 
@@ -198,6 +227,12 @@ println!("{}", archived_results);
 assert_eq!(archive_id, search_id);
 ```
 
+The same archived search is available as Markdown:
+
+```rust
+let markdown = client.search_archive_md(&id).await.expect("request");
+```
+
 ### Account API
 ```rust
 let client = Client::new(HashMap::<String, String>::new());
@@ -209,16 +244,17 @@ let account = client.account(parameter).await.expect("request");
 It returns your account information.
 
 ### Technical features
-- Search results as JSON with `search`, Markdown with `markdown`, or raw search engine HTML with `html`
+- Search results as JSON with `search`, Markdown with `md`, or raw search engine HTML with `html`
 - Image upload for Google Lens and other engines with `upload_image`
 - Dynamic JSON decoding using Serde JSON
 - Asyncronous HTTP request handle method using tokio and reqwest
 - Async tests using Tokio
 
-### Changes log
+### Change log
 - Unreleased:
   - Add Image API support with `client.upload_image(path, parameter)` and `client.upload_image_bytes(bytes, file_name, parameter)`.
   - Requests are sent over https directly instead of following the http redirect.
+- 1.2.1: Fix bug in `markdown()`, fix `client.md(parameter)` and `client.search_archive_md(&id)` method to return search results formatted as Markdown.
 - 1.2.0: Add `markdown` method to return search results formatted as Markdown.
 - 1.1.0: Always reuse the same client object instead of creating a new one for each search.
   - This is a breaking change for the API because the client must be unwrapped in the main function.
@@ -234,7 +270,7 @@ It returns your account information.
  * https://www.lpalmieri.com/posts/how-to-write-a-rest-client-in-rust-with-reqwest-and-wiremock/
  *  Serdes JSON
 
-## Examples in rust
+## Examples in Rust
 
 To run an example:
 ```sh
@@ -256,9 +292,7 @@ The keyword google can be replaced by any supported search engine:
 - apple_app_store
 - naver
 
-More example to come to match all search engines supported by [SerpApi.com.](https://serpapi.com/search-engine-apis)
-
-### Search bing
+### Search Bing
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -321,7 +355,7 @@ Ok(())
  * source code: [examples/bing_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/bing_search.rs)
 see: [https://serpapi.com/bing-search-api](https://serpapi.com/bing-search-api)
 
-### Search baidu
+### Search Baidu
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -384,7 +418,7 @@ Ok(())
  * source code: [examples/baidu_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/baidu_search.rs)
 see: [https://serpapi.com/baidu-search-api](https://serpapi.com/baidu-search-api)
 
-### Search yahoo
+### Search Yahoo
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -447,7 +481,7 @@ Ok(())
  * source code: [examples/yahoo_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/yahoo_search.rs)
 see: [https://serpapi.com/yahoo-search-api](https://serpapi.com/yahoo-search-api)
 
-### Search youtube
+### Search YouTube
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -510,7 +544,7 @@ Ok(())
  * source code: [examples/youtube_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/youtube_search.rs)
 see: [https://serpapi.com/youtube-search-api](https://serpapi.com/youtube-search-api)
 
-### Search walmart
+### Search Walmart
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -573,7 +607,7 @@ Ok(())
  * source code: [examples/walmart_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/walmart_search.rs)
 see: [https://serpapi.com/walmart-search-api](https://serpapi.com/walmart-search-api)
 
-### Search ebay
+### Search eBay
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -636,7 +670,7 @@ Ok(())
  * source code: [examples/ebay_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/ebay_search.rs)
 see: [https://serpapi.com/ebay-search-api](https://serpapi.com/ebay-search-api)
 
-### Search naver
+### Search Naver
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -699,7 +733,7 @@ Ok(())
  * source code: [examples/naver_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/naver_search.rs)
 see: [https://serpapi.com/naver-search-api](https://serpapi.com/naver-search-api)
 
-### Search home depot
+### Search Home Depot
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -762,7 +796,7 @@ Ok(())
  * source code: [examples/home_depot_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/home_depot_search.rs)
 see: [https://serpapi.com/home-depot-search-api](https://serpapi.com/home-depot-search-api)
 
-### Search apple app store
+### Search Apple App Store
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -825,7 +859,7 @@ Ok(())
  * source code: [examples/apple_app_store_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/apple_app_store_search.rs)
 see: [https://serpapi.com/apple-app-store](https://serpapi.com/apple-app-store)
 
-### Search duckduckgo
+### Search DuckDuckGo
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -888,7 +922,7 @@ Ok(())
  * source code: [examples/duckduckgo_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/duckduckgo_search.rs)
 see: [https://serpapi.com/duckduckgo-search-api](https://serpapi.com/duckduckgo-search-api)
 
-### Search google
+### Search Google
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -952,7 +986,7 @@ Ok(())
  * source code: [examples/google_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_search.rs)
 see: [https://serpapi.com/search-api](https://serpapi.com/search-api)
 
-### Search google scholar
+### Search Google Scholar
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1015,7 +1049,7 @@ Ok(())
  * source code: [examples/google_scholar_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_scholar_search.rs)
 see: [https://serpapi.com/google-scholar-api](https://serpapi.com/google-scholar-api)
 
-### Search google autocomplete
+### Search Google autocomplete
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1078,7 +1112,7 @@ Ok(())
  * source code: [examples/google_autocomplete_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_autocomplete_search.rs)
 see: [https://serpapi.com/google-autocomplete-api](https://serpapi.com/google-autocomplete-api)
 
-### Search google product
+### Search Google Product
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1142,7 +1176,7 @@ Ok(())
  * source code: [examples/google_product_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_product_search.rs)
 see: [https://serpapi.com/google-product-api](https://serpapi.com/google-product-api)
 
-### Search google reverse image
+### Search Google Reverse Image
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1209,7 +1243,7 @@ Ok(())
  * source code: [examples/google_reverse_image_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_reverse_image_search.rs)
 see: [https://serpapi.com/google-reverse-image](https://serpapi.com/google-reverse-image)
 
-### Search google local services
+### Search Google local services
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1273,7 +1307,7 @@ Ok(())
  * source code: [examples/google_local_services_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_local_services_search.rs)
 see: [https://serpapi.com/google-local-services-api](https://serpapi.com/google-local-services-api)
 
-### Search google maps
+### Search Google Maps
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1341,7 +1375,7 @@ Ok(())
  * source code: [examples/google_maps_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_maps_search.rs)
 see: [https://serpapi.com/google-maps-api](https://serpapi.com/google-maps-api)
 
-### Search google jobs
+### Search Google Jobs
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1404,7 +1438,7 @@ Ok(())
  * source code: [examples/google_jobs_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_jobs_search.rs)
 see: [https://serpapi.com/google-jobs-api](https://serpapi.com/google-jobs-api)
 
-### Search google play
+### Search Google Play
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1469,7 +1503,7 @@ Ok(())
  * source code: [examples/google_play_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_play_search.rs)
 see: [https://serpapi.com/google-play-api](https://serpapi.com/google-play-api)
 
-### Search google images
+### Search Google Images
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1598,11 +1632,10 @@ see: [https://serpapi.com/google-lens-upload-an-image](https://serpapi.com/googl
 
 ## License
 
-MIT License
+[MIT License](LICENSE)
 
 ## Continuous integration
-We love "true open source" and "continuous integration", and Test Drive Development (TDD).
- We are using RSpec to test [our infrastructure around the clock]) using Github Action to achieve the best QoS (Quality Of Service).
+We love "true open source" and "continuous integration", and Test Drive Development (TDD). We are using RSpec to test our infrastructure around the clock using Github Action to achieve the best QoS (Quality Of Service).
 
 The directory spec/ includes specification which serves the dual purposes of examples and functional tests.
 
