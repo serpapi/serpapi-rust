@@ -5,4 +5,7 @@
 //! SerpApi.com enables to do localized search, leverage advanced search engine features and a lot more...
 //! A completed documentation is available at [SerpApi](https://serpapi.com).
 //!
+//! Search results are available as JSON with `search`, as [Markdown](https://serpapi.com/markdown-output)
+//! optimized for LLMs and AI agents with `md`, or as raw search engine HTML with `html`.
+//!
 pub mod serpapi;
