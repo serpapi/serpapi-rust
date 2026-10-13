@@ -138,14 +138,6 @@ impl Client {
         Ok(body)
     }
 
-    /// alias of `md`, kept for compatibility with 1.2.0.
-    pub async fn markdown(
-        &self,
-        parameter: HashMap<String, String>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
-        self.md(parameter).await
-    }
-
     /// Get location using Location API
     /// # Arguments
     /// * `parameter` html search parameter
