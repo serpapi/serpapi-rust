@@ -11,7 +11,7 @@ Integrate search data into your AI workflow, RAG, fine-tuning, or Rust applicati
 To install in your Rust application, update Cargo.toml:
 
 ```sh
-serpapi="1.2.1"
+serpapi="1.3.0"
 ```
 
 ## Quick start
@@ -251,7 +251,7 @@ It returns your account information.
 - Async tests using Tokio
 
 ### Change log
-- Unreleased:
+- 1.3.0:
   - Add Image API support with `client.upload_image(path, parameter)` and `client.upload_image_bytes(bytes, file_name, parameter)`.
   - Requests are sent over https directly instead of following the http redirect.
 - 1.2.1: Fix bug in `markdown()`, fix `client.md(parameter)` and `client.search_archive_md(&id)` method to return search results formatted as Markdown.
