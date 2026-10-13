@@ -11,7 +11,7 @@ Integrate search data into your AI workflow, RAG, fine-tuning, or Rust applicati
 To install in your Rust application, update Cargo.toml:
 
 ```sh
-serpapi="1.2.0"
+serpapi="1.2.1"
 ```
 
 ## Quick start
