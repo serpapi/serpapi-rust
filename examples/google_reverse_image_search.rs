@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     println!("waiting...");
     let results = client.search(parameter).await?;
-    let image_sizes = results["image_sizes"].as_array().unwrap();
+    let image_results = results["image_results"].as_array().unwrap();
     println!("results received");
     println!("--- JSON ---");
     let status = &results["search_metadata"]["status"];
@@ -46,10 +46,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("search is successfull");
 
-        println!(" - number of image_sizes: {}", image_sizes.len());
+        println!(" - number of image_results: {}", image_results.len());
         println!(
-            " - image_sizes first result description: {}",
-            results["image_sizes"][0]
+            " - image_results first result description: {}",
+            results["image_results"][0]
         );
 
         // pagination: fetch up to 2 more pages
@@ -64,10 +64,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .into_owned()
                 .collect();
             let page_results = client.search(page_parameter).await?;
-            let count = page_results["image_sizes"]
+            let count = page_results["image_results"]
                 .as_array()
                 .map_or(0, |r| r.len());
-            println!(" - page {}: {} image_sizes", page, count);
+            println!(" - page {}: {} image_results", page, count);
             next = page_results["serpapi_pagination"]["next"]
                 .as_str()
                 .map(String::from);
