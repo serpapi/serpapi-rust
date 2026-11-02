@@ -163,7 +163,22 @@ async fn upload_image_rejects_invalid_image() {
         )
         .await
         .expect_err("invalid image");
+    assert!(error.to_string().contains("HTTP 400"));
     assert!(error.to_string().contains("Invalid image format"));
+}
+
+#[tokio::test]
+async fn upload_image_rejects_invalid_api_key() {
+    let mut default = HashMap::<String, String>::new();
+    default.insert("api_key".to_string(), "invalid_api_key".to_string());
+    let client = Client::new(default).unwrap();
+
+    let error = client
+        .upload_image_bytes(PNG_1X1.to_vec(), "image.png", HashMap::new())
+        .await
+        .expect_err("invalid api key");
+    assert!(error.to_string().contains("HTTP 401"));
+    assert!(error.to_string().contains("Invalid API key"));
 }
 
 #[tokio::test]

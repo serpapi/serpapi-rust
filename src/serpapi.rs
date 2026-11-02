@@ -315,7 +315,18 @@ impl Client {
         let query = self.query(parameter);
         let mut url = HOST.to_string();
         url.push_str(endpoint);
-        let res = self.http.get(url).query(&query).send().await?;
+        self.send(endpoint, self.http.get(url).query(&query)).await
+    }
+
+    /// send a request and return the content type along with the body.
+    ///  a non-2xx HTTP status is reported as an error including the response body,
+    ///  which holds the SerpApi error message or a non JSON error page from a proxy.
+    async fn send(
+        &self,
+        endpoint: &str,
+        request: reqwest::RequestBuilder,
+    ) -> Result<(String, String), Box<dyn std::error::Error>> {
+        let res = request.send().await?;
         let status = res.status();
         let content_type = res
             .headers()
@@ -343,8 +354,9 @@ impl Client {
         }
         let mut url = HOST.to_string();
         url.push_str(endpoint);
-        let res = self.http.post(url).multipart(form).send().await?;
-        let body = res.text().await?;
+        let (_content_type, body) = self
+            .send(endpoint, self.http.post(url).multipart(form))
+            .await?;
         let value: serde_json::Value = serde_json::from_str(&body)?;
         Ok(value)
     }
