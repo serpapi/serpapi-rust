@@ -9,7 +9,7 @@ fn api_key() -> String {
         Some(v) => v.into_string().unwrap(),
         None => panic!("$SERPAPI_KEY is not set"),
     };
-    return api_key;
+    api_key
 }
 
 #[tokio::test]
@@ -36,7 +36,7 @@ async fn search() {
     assert!(organic_results.len() > 1);
 
     let places = results["local_results"]["places"].as_array().unwrap();
-    assert!(places.len() > 0);
+    assert!(!places.is_empty());
 }
 
 #[tokio::test]

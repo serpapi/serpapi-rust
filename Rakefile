@@ -1,8 +1,13 @@
 
-task :default => [:fmt, :test, :doc, :oobt, :release]
+task :default => [:fmt, :lint, :test, :doc, :oobt, :release]
 
 task :fmt do 
   sh("cargo fmt")
+end
+
+task :lint do
+  sh("cargo fmt --check")
+  sh("cargo clippy --all-targets --all-features -- -D warnings")
 end
 
 task :clean do
@@ -34,4 +39,4 @@ task :publish do
   sh("cargo publish")
 end
 
-task :release => [:fmt, :test, :doc, :oobt, :publish]
+task :release => [:fmt, :lint, :test, :doc, :oobt, :publish]
