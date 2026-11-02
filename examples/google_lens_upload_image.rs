@@ -45,6 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // let's search with google lens using the uploaded image
     let mut parameter = HashMap::new();
+    parameter.insert("engine".to_string(), "google_lens".to_string());
     parameter.insert("image_id".to_string(), image_id.to_string());
 
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.

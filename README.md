@@ -1568,7 +1568,7 @@ Ok(())
  * source code: [examples/google_images_search.rs](https://github.com/serpapi/serpapi-rust/blob/master/examples/google_images_search.rs)
 see: [https://serpapi.com/images-results](https://serpapi.com/images-results)
 
-### Search google lens with an uploaded image
+### Search Google Lens
 ```rust
 let mut default = HashMap::new();
 default.insert("api_key".to_string(), "your_secret_api_key".to_string());
@@ -1598,6 +1598,7 @@ println!(" - image uploaded with id: {}", image_id);
 
 // let's search with google lens using the uploaded image
 let mut parameter = HashMap::new();
+parameter.insert("engine".to_string(), "google_lens".to_string());
 parameter.insert("image_id".to_string(), image_id.to_string());
 
 // search returns a JSON as serde_json::Value which can be accessed like a HashMap.

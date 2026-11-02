@@ -124,14 +124,12 @@ async fn upload_image_from_file() {
     default.insert("api_key".to_string(), api_key());
     let client = Client::new(default).unwrap();
 
-    let path = std::env::temp_dir().join("serpapi-rust-upload.png");
+    let path = std::env::temp_dir().join(format!("serpapi-rust-upload-{}.png", std::process::id()));
     std::fs::write(&path, PNG_1X1).expect("write image");
 
-    let upload = client
-        .upload_image(&path, HashMap::new())
-        .await
-        .expect("upload");
+    let result = client.upload_image(&path, HashMap::new()).await;
     std::fs::remove_file(&path).ok();
+    let upload = result.expect("upload");
 
     assert_eq!(upload["message"], "Image uploaded successfully.");
     assert!(!upload["image_id"].as_str().expect("image id").is_empty());
