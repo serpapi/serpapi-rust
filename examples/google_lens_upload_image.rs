@@ -32,6 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => {
             let image = reqwest::get("https://i.imgur.com/5bGzZi7.jpg")
                 .await?
+                .error_for_status()?
                 .bytes()
                 .await?
                 .to_vec();
@@ -58,8 +59,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("search failed with status: {}", status);
     } else {
         println!("search is successfull");
-        let visual_matches = results["visual_matches"].as_array().unwrap();
-        println!(" - number of visual_matches: {}", visual_matches.len());
+        // visual_matches is missing when google lens finds no match
+        let count = results["visual_matches"].as_array().map_or(0, |r| r.len());
+        println!(" - number of visual_matches: {}", count);
         println!(
             " - visual_matches first result description: {}",
             results["visual_matches"][0]

@@ -203,6 +203,8 @@ impl Client {
             .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or("image");
+        // fail fast before loading an oversized image in memory
+        check_image_size(tokio::fs::metadata(path).await?.len())?;
         let image = tokio::fs::read(path).await?;
         self.upload_image_bytes(image, file_name, parameter).await
     }
@@ -219,11 +221,17 @@ impl Client {
         file_name: &str,
         parameter: HashMap<String, String>,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        check_image_size(image.len() as u64)?;
+        let mime_type = image_mime_type(&image, file_name);
         let part = reqwest::multipart::Part::bytes(image)
             .file_name(file_name.to_string())
-            .mime_str(image_mime_type(file_name))?;
+            .mime_str(mime_type)?;
+        // the Image API only takes the api_key,
+        //  search parameter from the client default such as engine or output are not forwarded.
+        let mut field = self.query(parameter);
+        field.retain(|key, _| key == "api_key" || key == "source");
         let form = reqwest::multipart::Form::new().part("image", part);
-        let results = self.post_multipart("/image", parameter, form).await?;
+        let results = self.post_multipart("/image", field, form).await?;
         if let Some(error) = results["error"].as_str() {
             return Err(format!("image upload failed with: {}", error).into());
         }
@@ -342,14 +350,15 @@ impl Client {
     }
 
     /// execute a multipart/form-data POST request and decode the JSON response.
-    ///  the request parameters are sent as form fields alongside the given form parts.
+    ///  the fields are sent as is alongside the given form parts,
+    ///  the client default parameter are not merged.
     async fn post_multipart(
         &self,
         endpoint: &str,
-        parameter: HashMap<String, String>,
+        field: HashMap<String, String>,
         mut form: reqwest::multipart::Form,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-        for (key, value) in self.query(parameter) {
+        for (key, value) in field {
             form = form.text(key, value);
         }
         let mut url = HOST.to_string();
@@ -378,9 +387,34 @@ impl Client {
     }
 }
 
-/// guess the image MIME type from the file extension.
+/// Image API upload size limit: 500 KB.
+const IMAGE_MAX_SIZE: u64 = 500 * 1024;
+
+/// reject an image larger than the Image API limit before uploading it.
+fn check_image_size(size: u64) -> Result<(), Box<dyn std::error::Error>> {
+    if size > IMAGE_MAX_SIZE {
+        return Err(format!(
+            "image is too large: {} bytes, the Image API limit is {} bytes",
+            size, IMAGE_MAX_SIZE
+        )
+        .into());
+    }
+    Ok(())
+}
+
+/// guess the image MIME type from the content signature,
+///  or from the file extension when the signature is unknown.
 ///  the Image API supports jpg, jpeg, png and webp.
-fn image_mime_type(file_name: &str) -> &'static str {
+fn image_mime_type(image: &[u8], file_name: &str) -> &'static str {
+    if image.starts_with(&[0xFF, 0xD8, 0xFF]) {
+        return "image/jpeg";
+    }
+    if image.starts_with(b"\x89PNG\r\n\x1a\n") {
+        return "image/png";
+    }
+    if image.len() >= 12 && image.starts_with(b"RIFF") && &image[8..12] == b"WEBP" {
+        return "image/webp";
+    }
     let extension = Path::new(file_name)
         .extension()
         .and_then(|ext| ext.to_str())

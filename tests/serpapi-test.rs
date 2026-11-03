@@ -182,6 +182,57 @@ async fn upload_image_rejects_invalid_api_key() {
 }
 
 #[tokio::test]
+async fn upload_image_without_extension() {
+    let mut default = HashMap::<String, String>::new();
+    default.insert("api_key".to_string(), api_key());
+    let client = Client::new(default).unwrap();
+
+    // the MIME type is guessed from the PNG signature
+    let upload = client
+        .upload_image_bytes(PNG_1X1.to_vec(), "image", HashMap::new())
+        .await
+        .expect("upload");
+    assert!(!upload["image_id"].as_str().expect("image id").is_empty());
+}
+
+#[tokio::test]
+async fn upload_image_ignores_search_default() {
+    let mut default = HashMap::<String, String>::new();
+    default.insert("api_key".to_string(), api_key());
+    default.insert("engine".to_string(), "google_lens".to_string());
+    default.insert("output".to_string(), "html".to_string());
+    let client = Client::new(default).unwrap();
+
+    let upload = client
+        .upload_image_bytes(PNG_1X1.to_vec(), "image.png", HashMap::new())
+        .await
+        .expect("upload");
+    assert!(!upload["image_id"].as_str().expect("image id").is_empty());
+}
+
+#[tokio::test]
+async fn upload_image_rejects_large_image() {
+    let client = Client::new(HashMap::<String, String>::new()).unwrap();
+    let error = client
+        .upload_image_bytes(vec![0; 501 * 1024], "image.png", HashMap::new())
+        .await
+        .expect_err("large image");
+    assert!(error.to_string().contains("image is too large"));
+}
+
+#[tokio::test]
+async fn upload_image_rejects_large_file() {
+    let client = Client::new(HashMap::<String, String>::new()).unwrap();
+    let path = std::env::temp_dir().join(format!("serpapi-rust-large-{}.png", std::process::id()));
+    std::fs::write(&path, vec![0; 501 * 1024]).expect("write image");
+
+    let result = client.upload_image(&path, HashMap::new()).await;
+    std::fs::remove_file(&path).ok();
+    let error = result.expect_err("large file");
+    assert!(error.to_string().contains("image is too large"));
+}
+
+#[tokio::test]
 async fn upload_image_missing_file() {
     let client = Client::new(HashMap::<String, String>::new()).unwrap();
     let result = client
