@@ -4,6 +4,7 @@
 //! Client wraps a custom HTTP client designed for SerpApi.com
 //!
 use std::collections::HashMap;
+use std::path::Path;
 
 // model serpapi client
 //  because of Rust designed we propose to create a new search everytime
@@ -17,7 +18,9 @@ pub struct Client {
     pub http: reqwest::Client,
 }
 
-const HOST: &str = "http://serpapi.com";
+// https is required: a plain http request is redirected with a 301
+//  which turns the Image API multipart POST into a GET.
+const HOST: &str = "https://serpapi.com";
 
 impl Client {
     /// initialize a serp api client with default parameters.
@@ -161,6 +164,80 @@ impl Client {
         Ok(results)
     }
 
+    /// Upload an image using the Image API.
+    ///  The returned `image_id` can be supplied to Search API engines
+    ///  supporting uploaded images, such as Google Lens.
+    ///  Supported formats: jpg, jpeg, png and webp up to 500 KB.
+    ///  The `image_id` expires after 10 minutes.
+    ///  see: https://serpapi.com/image-api
+    /// # Arguments
+    /// * `path` image file path
+    /// * `parameter` request parameter, such as an `api_key` overriding the client default
+    /// # Examples
+    /// ```no_run
+    /// use std::collections::HashMap;
+    /// use serpapi::serpapi::Client;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///  let mut default = HashMap::<String, String>::new();
+    ///  default.insert("api_key".to_string(), "secret_api_key".to_string());
+    ///  let client = Client::new(default).unwrap();
+    ///  let upload = client.upload_image("./image.jpg", HashMap::new()).await.expect("upload");
+    ///  let image_id = upload["image_id"].as_str().expect("image id");
+    ///  // search with google lens using the uploaded image
+    ///  let mut parameter = HashMap::<String, String>::new();
+    ///  parameter.insert("engine".to_string(), "google_lens".to_string());
+    ///  parameter.insert("image_id".to_string(), image_id.to_string());
+    ///  let results = client.search(parameter).await.expect("request");
+    ///  // let visual_matches = results["visual_matches"].as_array().unwrap();
+    /// }
+    /// ```
+    pub async fn upload_image<P: AsRef<Path>>(
+        &self,
+        path: P,
+        parameter: HashMap<String, String>,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let path = path.as_ref();
+        let file_name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("image");
+        // fail fast before loading an oversized image in memory
+        check_image_size(tokio::fs::metadata(path).await?.len())?;
+        let image = tokio::fs::read(path).await?;
+        self.upload_image_bytes(image, file_name, parameter).await
+    }
+
+    /// Upload an in-memory image using the Image API.
+    ///  see: Client::upload_image
+    /// # Arguments
+    /// * `image` binary content of the image
+    /// * `file_name` file name including the extension, such as "image.png"
+    /// * `parameter` request parameter, such as an `api_key` overriding the client default
+    pub async fn upload_image_bytes(
+        &self,
+        image: Vec<u8>,
+        file_name: &str,
+        parameter: HashMap<String, String>,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        check_image_size(image.len() as u64)?;
+        let mime_type = image_mime_type(&image, file_name);
+        let part = reqwest::multipart::Part::bytes(image)
+            .file_name(file_name.to_string())
+            .mime_str(mime_type)?;
+        // the Image API only takes the api_key,
+        //  search parameter from the client default such as engine or output are not forwarded.
+        let mut field = self.query(parameter);
+        field.retain(|key, _| key == "api_key" || key == "source");
+        let form = reqwest::multipart::Form::new().part("image", part);
+        let results = self.post_multipart("/image", field, form).await?;
+        if let Some(error) = results["error"].as_str() {
+            return Err(format!("image upload failed with: {}", error).into());
+        }
+        Ok(results)
+    }
+
     // Retrieve search result from the Search Archive API
     pub async fn search_archive(
         &self,
@@ -243,20 +320,21 @@ impl Client {
         endpoint: &str,
         parameter: HashMap<String, String>,
     ) -> Result<(String, String), Box<dyn std::error::Error>> {
-        let mut query = HashMap::<String, String>::new();
-        query.insert("source".to_string(), "rust".to_string());
-        for (key, value) in self.parameter.iter() {
-            if !parameter.contains_key(key) {
-                query.insert(key.to_string(), value.to_string());
-            }
-        }
-        for (key, value) in parameter.iter() {
-            query.insert(key.to_string(), value.to_string());
-        }
-
+        let query = self.query(parameter);
         let mut url = HOST.to_string();
         url.push_str(endpoint);
-        let res = self.http.get(url).query(&query).send().await?;
+        self.send(endpoint, self.http.get(url).query(&query)).await
+    }
+
+    /// send a request and return the content type along with the body.
+    ///  a non-2xx HTTP status is reported as an error including the response body,
+    ///  which holds the SerpApi error message or a non JSON error page from a proxy.
+    async fn send(
+        &self,
+        endpoint: &str,
+        request: reqwest::RequestBuilder,
+    ) -> Result<(String, String), Box<dyn std::error::Error>> {
+        let res = request.send().await?;
         let status = res.status();
         let content_type = res
             .headers()
@@ -269,6 +347,83 @@ impl Client {
             return Err(format!("{} failed with HTTP {}: {}", endpoint, status, body).into());
         }
         Ok((content_type, body))
+    }
+
+    /// execute a multipart/form-data POST request and decode the JSON response.
+    ///  the fields are sent as is alongside the given form parts,
+    ///  the client default parameter are not merged.
+    async fn post_multipart(
+        &self,
+        endpoint: &str,
+        field: HashMap<String, String>,
+        mut form: reqwest::multipart::Form,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        for (key, value) in field {
+            form = form.text(key, value);
+        }
+        let mut url = HOST.to_string();
+        url.push_str(endpoint);
+        let (_content_type, body) = self
+            .send(endpoint, self.http.post(url).multipart(form))
+            .await?;
+        let value: serde_json::Value = serde_json::from_str(&body)?;
+        Ok(value)
+    }
+
+    /// merge the client default parameter with the request parameter.
+    ///  the request parameter takes precedence over the client default.
+    fn query(&self, parameter: HashMap<String, String>) -> HashMap<String, String> {
+        let mut query = HashMap::<String, String>::new();
+        query.insert("source".to_string(), "rust".to_string());
+        for (key, value) in self.parameter.iter() {
+            if !parameter.contains_key(key) {
+                query.insert(key.to_string(), value.to_string());
+            }
+        }
+        for (key, value) in parameter.iter() {
+            query.insert(key.to_string(), value.to_string());
+        }
+        query
+    }
+}
+
+/// Image API upload size limit: 500 KB.
+const IMAGE_MAX_SIZE: u64 = 500 * 1024;
+
+/// reject an image larger than the Image API limit before uploading it.
+fn check_image_size(size: u64) -> Result<(), Box<dyn std::error::Error>> {
+    if size > IMAGE_MAX_SIZE {
+        return Err(format!(
+            "image is too large: {} bytes, the Image API limit is {} bytes",
+            size, IMAGE_MAX_SIZE
+        )
+        .into());
+    }
+    Ok(())
+}
+
+/// guess the image MIME type from the content signature,
+///  or from the file extension when the signature is unknown.
+///  the Image API supports jpg, jpeg, png and webp.
+fn image_mime_type(image: &[u8], file_name: &str) -> &'static str {
+    if image.starts_with(&[0xFF, 0xD8, 0xFF]) {
+        return "image/jpeg";
+    }
+    if image.starts_with(b"\x89PNG\r\n\x1a\n") {
+        return "image/png";
+    }
+    if image.len() >= 12 && image.starts_with(b"RIFF") && &image[8..12] == b"WEBP" {
+        return "image/webp";
+    }
+    let extension = Path::new(file_name)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.to_lowercase());
+    match extension.as_deref() {
+        Some("jpg") | Some("jpeg") => "image/jpeg",
+        Some("png") => "image/png",
+        Some("webp") => "image/webp",
+        _ => "application/octet-stream",
     }
 }
 
