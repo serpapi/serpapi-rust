@@ -34,7 +34,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     println!("waiting...");
     let results = client.search(parameter).await?;
-    let local_ads = results["local_ads"].as_array().unwrap();
     println!("results received");
     println!("--- JSON ---");
     let status = &results["search_metadata"]["status"];
@@ -43,7 +42,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("search is successfull");
 
-        println!(" - number of local_ads: {}", local_ads.len());
+        // local_ads is missing when the search returns no result, see the error field
+        let count = results["local_ads"].as_array().map_or(0, |r| r.len());
+        println!(" - number of local_ads: {}", count);
+        if let Some(error) = results["error"].as_str() {
+            println!(" - error: {}", error);
+        }
         println!(
             " - local_ads first result description: {}",
             results["local_ads"][0]

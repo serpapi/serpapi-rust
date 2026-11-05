@@ -241,13 +241,44 @@ async fn upload_image_missing_file() {
     assert!(result.is_err());
 }
 
+// the HTTP status error must not expose the api_key (spec F13)
+//  an invalid api_key is rejected with HTTP 401 without using any search credit.
+#[tokio::test]
+async fn http_error_redacts_api_key() {
+    let fake_key = "fake0secret0api0key0do0not0leak";
+    let mut default = HashMap::<String, String>::new();
+    default.insert("engine".to_string(), "google".to_string());
+    default.insert("api_key".to_string(), fake_key.to_string());
+    let client = Client::new(default).unwrap();
+
+    let mut parameter = HashMap::<String, String>::new();
+    parameter.insert("q".to_string(), "coffee".to_string());
+    let errors = vec![
+        client.search(parameter.clone()).await.expect_err("search"),
+        client.html(parameter.clone()).await.expect_err("html"),
+        client.md(parameter).await.expect_err("md"),
+        client
+            .upload_image_bytes(PNG_1X1.to_vec(), "image.png", HashMap::new())
+            .await
+            .expect_err("upload"),
+    ];
+    for error in errors {
+        let message = error.to_string();
+        assert!(message.contains("HTTP 401"), "{}", message);
+        assert!(message.contains("Invalid API key"), "{}", message);
+        assert!(!message.contains(fake_key), "api_key leaked: {}", message);
+        assert!(!format!("{:?}", error).contains(fake_key));
+    }
+}
+
 #[tokio::test]
 async fn account() {
     let client = Client::new(HashMap::<String, String>::new()).unwrap();
     let mut parameter = HashMap::<String, String>::new();
     parameter.insert("api_key".to_string(), api_key());
     let account = client.account(parameter).await.expect("request");
-    assert_eq!(account["api_key"], api_key());
+    // never use assert_eq on the api_key: a failure would print the secret
+    assert!(account["api_key"] == api_key(), "account api_key mismatch");
     assert_ne!(account["account_email"], "");
 }
 
