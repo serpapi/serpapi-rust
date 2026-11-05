@@ -1,6 +1,3 @@
-#![allow(warnings)]
-#![allow(dead_code)]
-
 //! Client wraps a custom HTTP client designed for SerpApi.com
 //!
 use std::collections::HashMap;
