@@ -1,6 +1,3 @@
-#![allow(warnings)]
-#![allow(dead_code)]
-
 //! Client wraps a custom HTTP client designed for SerpApi.com
 //!
 use std::collections::HashMap;
@@ -231,9 +228,11 @@ impl Client {
         let mut field = self.query(parameter);
         field.retain(|key, _| key == "api_key" || key == "source");
         let form = reqwest::multipart::Form::new().part("image", part);
+        let api_key = field.get("api_key").cloned();
         let results = self.post_multipart("/image", field, form).await?;
         if let Some(error) = results["error"].as_str() {
-            return Err(format!("image upload failed with: {}", error).into());
+            let message = format!("image upload failed with: {}", error);
+            return Err(redact(message, api_key.as_deref()).into());
         }
         Ok(results)
     }
@@ -246,7 +245,6 @@ impl Client {
         let mut endpoint = "/searches/".to_string();
         endpoint.push_str(search_id);
         endpoint.push_str(".json");
-        println!(">> {}", endpoint);
         let results = self.json(&endpoint, HashMap::new()).await?;
         Ok(results)
     }
@@ -281,7 +279,6 @@ impl Client {
         parameter: HashMap<String, String>,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let body = self.get(endpoint, parameter).await?;
-        //debug: println!("Body:\n{}", body);
         //  a non JSON body means the output is html or md, see: Client::html and Client::md
         let value: serde_json::Value = serde_json::from_str(&body)?;
         Ok(value)
@@ -298,9 +295,11 @@ impl Client {
         endpoint: &str,
         parameter: HashMap<String, String>,
     ) -> Result<String, Box<dyn std::error::Error>> {
+        let api_key = self.api_key(&parameter);
         let (content_type, body) = self.raw(endpoint, parameter).await?;
         if content_type.starts_with("application/json") {
-            return Err(format!("search failed on {} with: {}", endpoint, body).into());
+            let message = format!("search failed on {} with: {}", endpoint, body);
+            return Err(redact(message, api_key.as_deref()).into());
         }
         Ok(body)
     }
@@ -323,18 +322,22 @@ impl Client {
         let query = self.query(parameter);
         let mut url = HOST.to_string();
         url.push_str(endpoint);
-        self.send(endpoint, self.http.get(url).query(&query)).await
+        let api_key = query.get("api_key").map(String::as_str);
+        self.send(endpoint, self.http.get(url).query(&query), api_key)
+            .await
     }
 
     /// send a request and return the content type along with the body.
     ///  a non-2xx HTTP status is reported as an error including the response body,
     ///  which holds the SerpApi error message or a non JSON error page from a proxy.
+    ///  the `api_key` is removed from every error, see: redact_error and redact.
     async fn send(
         &self,
         endpoint: &str,
         request: reqwest::RequestBuilder,
+        api_key: Option<&str>,
     ) -> Result<(String, String), Box<dyn std::error::Error>> {
-        let res = request.send().await?;
+        let res = request.send().await.map_err(redact_error)?;
         let status = res.status();
         let content_type = res
             .headers()
@@ -342,9 +345,10 @@ impl Client {
             .and_then(|value| value.to_str().ok())
             .unwrap_or("")
             .to_lowercase();
-        let body = res.text().await?;
+        let body = res.text().await.map_err(redact_error)?;
         if !status.is_success() {
-            return Err(format!("{} failed with HTTP {}: {}", endpoint, status, body).into());
+            let message = format!("{} failed with HTTP {}: {}", endpoint, status, body);
+            return Err(redact(message, api_key).into());
         }
         Ok((content_type, body))
     }
@@ -358,14 +362,14 @@ impl Client {
         field: HashMap<String, String>,
         mut form: reqwest::multipart::Form,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let api_key = field.get("api_key").cloned();
         for (key, value) in field {
             form = form.text(key, value);
         }
         let mut url = HOST.to_string();
         url.push_str(endpoint);
-        let (_content_type, body) = self
-            .send(endpoint, self.http.post(url).multipart(form))
-            .await?;
+        let request = self.http.post(url).multipart(form);
+        let (_content_type, body) = self.send(endpoint, request, api_key.as_deref()).await?;
         let value: serde_json::Value = serde_json::from_str(&body)?;
         Ok(value)
     }
@@ -384,6 +388,50 @@ impl Client {
             query.insert(key.to_string(), value.to_string());
         }
         query
+    }
+
+    /// the api_key sent with the request parameter, or the client default.
+    fn api_key(&self, parameter: &HashMap<String, String>) -> Option<String> {
+        parameter
+            .get("api_key")
+            .or_else(|| self.parameter.get("api_key"))
+            .cloned()
+    }
+}
+
+/// remove the api_key from the URL carried by a reqwest error.
+///  reqwest displays the full request URL in its errors,
+///  which would expose the secret api_key in logs or panics.
+fn redact_error(mut error: reqwest::Error) -> reqwest::Error {
+    if let Some(url) = error.url_mut() {
+        redact_url(url);
+    }
+    error
+}
+
+/// remove the api_key from the URL query, the other parameter are kept to ease debugging.
+fn redact_url(url: &mut reqwest::Url) {
+    if !url.query_pairs().any(|(key, _)| key == "api_key") {
+        return;
+    }
+    let pairs: Vec<(String, String)> = url
+        .query_pairs()
+        .filter(|(key, _)| key != "api_key")
+        .map(|(key, value)| (key.into_owned(), value.into_owned()))
+        .collect();
+    if pairs.is_empty() {
+        url.set_query(None);
+    } else {
+        url.query_pairs_mut().clear().extend_pairs(pairs);
+    }
+}
+
+/// replace any occurrence of the api_key in an error message,
+///  such as a proxy error page echoing the request URL.
+fn redact(message: String, api_key: Option<&str>) -> String {
+    match api_key {
+        Some(key) if !key.is_empty() => message.replace(key, "[REDACTED]"),
+        _ => message,
     }
 }
 
@@ -432,4 +480,48 @@ fn image_mime_type(image: &[u8], file_name: &str) -> &'static str {
 fn force_output(mut parameter: HashMap<String, String>, format: &str) -> HashMap<String, String> {
     parameter.insert("output".to_string(), format.to_string());
     parameter
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn redact_url_removes_api_key_only() {
+        let mut url =
+            reqwest::Url::parse("https://serpapi.com/search?q=a%20b&api_key=secret&source=rust")
+                .unwrap();
+        redact_url(&mut url);
+        assert_eq!(url.as_str(), "https://serpapi.com/search?q=a+b&source=rust");
+    }
+
+    #[test]
+    fn redact_url_without_other_parameter() {
+        let mut url = reqwest::Url::parse("https://serpapi.com/account?api_key=secret").unwrap();
+        redact_url(&mut url);
+        assert_eq!(url.as_str(), "https://serpapi.com/account");
+    }
+
+    #[test]
+    fn redact_url_keeps_url_without_api_key() {
+        let raw = "https://serpapi.com/searches/123.json?source=rust&q=%C3%A9";
+        let mut url = reqwest::Url::parse(raw).unwrap();
+        redact_url(&mut url);
+        assert_eq!(url.as_str(), raw);
+    }
+
+    #[test]
+    fn redact_replaces_api_key_in_message() {
+        let message = "proxy error for https://serpapi.com/search?api_key=secret".to_string();
+        assert_eq!(
+            redact(message, Some("secret")),
+            "proxy error for https://serpapi.com/search?api_key=[REDACTED]"
+        );
+    }
+
+    #[test]
+    fn redact_ignores_missing_or_empty_api_key() {
+        assert_eq!(redact("message".to_string(), None), "message");
+        assert_eq!(redact("message".to_string(), Some("")), "message");
+    }
 }

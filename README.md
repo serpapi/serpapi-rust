@@ -254,6 +254,8 @@ It returns your account information.
 - 1.3.0:
   - Add Image API support with `client.upload_image(path, parameter)` and `client.upload_image_bytes(bytes, file_name, parameter)`.
   - Requests are sent over https directly instead of following the http redirect.
+  - Security: the `api_key` is removed from every error message. Network errors used to display the full request URL including the `api_key`. The URL is still displayed without it.
+  - `search_archive` no longer prints the requested endpoint to stdout.
 - 1.2.1: Remove `markdown()` which called a non-existent endpoint, use `client.md(parameter)` and `client.search_archive_md(&id)` to return search results formatted as Markdown.
 - 1.2.0: Add `markdown` method to return search results formatted as Markdown.
 - 1.1.0: Always reuse the same client object instead of creating a new one for each search.

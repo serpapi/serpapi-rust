@@ -34,7 +34,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // search returns a JSON as serde_json::Value which can be accessed like a HashMap.
     println!("waiting...");
     let results = client.search(parameter).await?;
-    let product_results = results["product_results"].as_array().unwrap();
     println!("results received");
     println!("--- JSON ---");
     let status = &results["search_metadata"]["status"];
@@ -43,7 +42,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("search is successfull");
 
-        println!(" - number of product_results: {}", product_results.len());
+        // product_results is missing when the search returns no result, see the error field
+        let count = results["product_results"].as_array().map_or(0, |r| r.len());
+        println!(" - number of product_results: {}", count);
+        if let Some(error) = results["error"].as_str() {
+            println!(" - error: {}", error);
+        }
         println!(
             " - product_results first result description: {}",
             results["product_results"][0]
