@@ -40,8 +40,8 @@ fn key_parameter() -> HashMap<String, String> {
 }
 
 // check Display and Debug of the error and of its whole source chain
-fn assert_redacted(error: Box<dyn Error>) {
-    let mut cause: Option<&dyn Error> = Some(error.as_ref());
+fn assert_redacted<E: Error + 'static>(error: E) {
+    let mut cause: Option<&dyn Error> = Some(&error);
     while let Some(e) = cause {
         let display = e.to_string();
         let debug = format!("{:?}", e);

@@ -3,6 +3,62 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+/// Error returned by the client.
+///  It is `Send` and `Sync`, so results can cross `tokio::spawn` boundaries,
+///  and `?` converts it into `Box<dyn std::error::Error>`,
+///  `Box<dyn std::error::Error + Send + Sync>` or `anyhow::Error`.
+#[derive(Debug)]
+pub struct Error(Box<dyn std::error::Error + Send + Sync>);
+
+impl Error {
+    /// the underlying error, such as a `reqwest::Error`, to inspect with `downcast_ref`.
+    pub fn get_ref(&self) -> &(dyn std::error::Error + Send + Sync + 'static) {
+        self.0.as_ref()
+    }
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        self.0.source()
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(error: reqwest::Error) -> Self {
+        Error(Box::new(error))
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(error: serde_json::Error) -> Self {
+        Error(Box::new(error))
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(error: std::io::Error) -> Self {
+        Error(Box::new(error))
+    }
+}
+
+impl From<String> for Error {
+    fn from(message: String) -> Self {
+        Error(message.into())
+    }
+}
+
+impl From<&str> for Error {
+    fn from(message: &str) -> Self {
+        Error(message.into())
+    }
+}
+
 // model serpapi client
 //  because of Rust designed we propose to create a new search everytime
 //   as opose of modifying the same search object over and over.
@@ -23,7 +79,7 @@ impl Client {
     /// initialize a serp api client with default parameters.
     /// # Arguments
     /// * `parameter` allows to set default parameter like: api_key or engine for the client.
-    pub fn new(parameter: HashMap<String, String>) -> Result<Client, Box<dyn std::error::Error>> {
+    pub fn new(parameter: HashMap<String, String>) -> Result<Client, Error> {
         let http = reqwest::Client::builder().build()?;
         let client = Client { parameter, http };
 
@@ -62,7 +118,7 @@ impl Client {
     pub async fn search(
         &self,
         parameter: HashMap<String, String>,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    ) -> Result<serde_json::Value, Error> {
         let results = self.json("/search", parameter).await?;
         Ok(results)
     }
@@ -95,10 +151,7 @@ impl Client {
     ///  assert!(markdown.starts_with("---"));
     /// }
     /// ```
-    pub async fn md(
-        &self,
-        parameter: HashMap<String, String>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn md(&self, parameter: HashMap<String, String>) -> Result<String, Error> {
         let body = self.text("/search", force_output(parameter, "md")).await?;
         Ok(body)
     }
@@ -125,10 +178,7 @@ impl Client {
     /// assert!(html.len() > 100);
     /// }
     /// ```
-    pub async fn html(
-        &self,
-        parameter: HashMap<String, String>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn html(&self, parameter: HashMap<String, String>) -> Result<String, Error> {
         let body = self
             .text("/search", force_output(parameter, "html"))
             .await?;
@@ -156,7 +206,7 @@ impl Client {
     pub async fn location(
         &self,
         parameter: HashMap<String, String>,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    ) -> Result<serde_json::Value, Error> {
         let results = self.json("/locations.json", parameter).await?;
         Ok(results)
     }
@@ -194,7 +244,7 @@ impl Client {
         &self,
         path: P,
         parameter: HashMap<String, String>,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    ) -> Result<serde_json::Value, Error> {
         let path = path.as_ref();
         let file_name = path
             .file_name()
@@ -217,7 +267,7 @@ impl Client {
         image: Vec<u8>,
         file_name: &str,
         parameter: HashMap<String, String>,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    ) -> Result<serde_json::Value, Error> {
         check_image_size(image.len() as u64)?;
         let mime_type = image_mime_type(&image, file_name);
         let part = reqwest::multipart::Part::bytes(image)
@@ -238,10 +288,7 @@ impl Client {
     }
 
     // Retrieve search result from the Search Archive API
-    pub async fn search_archive(
-        &self,
-        search_id: &str,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    pub async fn search_archive(&self, search_id: &str) -> Result<serde_json::Value, Error> {
         let mut endpoint = "/searches/".to_string();
         endpoint.push_str(search_id);
         endpoint.push_str(".json");
@@ -253,10 +300,7 @@ impl Client {
     ///  see: https://serpapi.com/markdown-output
     /// # Arguments
     /// * `search_id` from the original search: `results["search_metadata"]["id"]`
-    pub async fn search_archive_md(
-        &self,
-        search_id: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn search_archive_md(&self, search_id: &str) -> Result<String, Error> {
         let mut endpoint = "/searches/".to_string();
         endpoint.push_str(search_id);
         endpoint.push_str(".md");
@@ -268,7 +312,7 @@ impl Client {
     pub async fn account(
         &self,
         parameter: HashMap<String, String>,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    ) -> Result<serde_json::Value, Error> {
         let results = self.json("/account", parameter).await?;
         Ok(results)
     }
@@ -277,7 +321,7 @@ impl Client {
         &self,
         endpoint: &str,
         parameter: HashMap<String, String>,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    ) -> Result<serde_json::Value, Error> {
         let body = self.get(endpoint, parameter).await?;
         //  a non JSON body means the output is html or md, see: Client::html and Client::md
         let value: serde_json::Value = serde_json::from_str(&body)?;
@@ -294,7 +338,7 @@ impl Client {
         &self,
         endpoint: &str,
         parameter: HashMap<String, String>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, Error> {
         let api_key = self.api_key(&parameter);
         let (content_type, body) = self.raw(endpoint, parameter).await?;
         if content_type.starts_with("application/json") {
@@ -308,7 +352,7 @@ impl Client {
         &self,
         endpoint: &str,
         parameter: HashMap<String, String>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, Error> {
         let (_content_type, body) = self.raw(endpoint, parameter).await?;
         Ok(body)
     }
@@ -318,7 +362,7 @@ impl Client {
         &self,
         endpoint: &str,
         parameter: HashMap<String, String>,
-    ) -> Result<(String, String), Box<dyn std::error::Error>> {
+    ) -> Result<(String, String), Error> {
         let query = self.query(parameter);
         let mut url = HOST.to_string();
         url.push_str(endpoint);
@@ -336,7 +380,7 @@ impl Client {
         endpoint: &str,
         request: reqwest::RequestBuilder,
         api_key: Option<&str>,
-    ) -> Result<(String, String), Box<dyn std::error::Error>> {
+    ) -> Result<(String, String), Error> {
         let res = request.send().await.map_err(redact_error)?;
         let status = res.status();
         let content_type = res
@@ -361,7 +405,7 @@ impl Client {
         endpoint: &str,
         field: HashMap<String, String>,
         mut form: reqwest::multipart::Form,
-    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    ) -> Result<serde_json::Value, Error> {
         let api_key = field.get("api_key").cloned();
         for (key, value) in field {
             form = form.text(key, value);
@@ -439,7 +483,7 @@ fn redact(message: String, api_key: Option<&str>) -> String {
 const IMAGE_MAX_SIZE: u64 = 500 * 1024;
 
 /// reject an image larger than the Image API limit before uploading it.
-fn check_image_size(size: u64) -> Result<(), Box<dyn std::error::Error>> {
+fn check_image_size(size: u64) -> Result<(), Error> {
     if size > IMAGE_MAX_SIZE {
         return Err(format!(
             "image is too large: {} bytes, the Image API limit is {} bytes",
